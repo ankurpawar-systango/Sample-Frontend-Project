@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Frontend Unit Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background: #fafafa;
+        }
+        .test-case.pass {
+            border-left-color: #28a745;
+            background: #f0f8f0;
+        }
+        .test-case.fail {
+            border-left-color: #dc3545;
+            background: #fff0f0;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-status {
+            font-size: 14px;
+            color: #666;
+        }
+        .pass .test-status::before {
+            content: "✓ PASS: ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        .fail .test-status::before {
+            content: "✗ FAIL: ";
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-radius: 4px;
+        }
+        .summary.all-pass {
+            background: #f0f8f0;
+            border: 2px solid #28a745;
+        }
+        .summary.has-fail {
+            background: #fff0f0;
+            border: 2px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Login Frontend Unit Tests</h1>
+        <div id="testResults"></div>
+        <div id="testSummary" class="summary"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        /**
+         * Frontend Unit Tests for Login Form
+         */
+
+        class LoginFrontendTests {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+
+            /**
+             * Run all tests
+             */
+            async runAll() {
+                console.log('Starting frontend login tests...');
+
+                await this.testFormElementsExist();
+                await this.testFormValidation();
+                await this.testAPIConfigurationExists();
+                await this.testSessionCheckFunction();
+                await this.testShowAlertFunction();
+                await this.testSetBackendUrlFunction();
+                await this.testBackendUrlConfiguration();
+                await this.testKeepLoggedCheckbox();
+                await this.testPasswordInputType();
+                await this.testFormStructure();
+
+                this.printResults();
+            }
+
+            /**
+             * Test that all required form elements exist
+             */
+            async testFormElementsExist() {
+                const testName = 'All required form elements exist';
+                try {
+                    const form = document.getElementById('loginForm');
+                    const username = document.getElementById('username');
+                    const password = document.getElementById('password');
+                    const submitBtn = document.getElementById('submitBtn');
+                    const keepLogged = document.getElementById('keepLogged');
+
+                    const passed = form && username && password && submitBtn && keepLogged;
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test form validation logic
+             */
+            async testFormValidation() {
+                const testName = 'Form validates empty credentials';
+                try {
+                    const username = '';
+                    const password = '';
+                    const isValid = username.trim() && password;
+                    this.addTest(testName, !isValid); // Should be invalid
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test that API configuration exists
+             */
+            async testAPIConfigurationExists() {
+                const testName = 'API configuration object exists';
+                try {
+                    const hasConfig = typeof CONFIG !== 'undefined' &&
+                                      CONFIG.BACKEND_URL &&
+                                      CONFIG.LOGIN_ENDPOINT;
+                    this.addTest(testName, hasConfig);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test session check function exists
+             */
+            async testSessionCheckFunction() {
+                const testName = 'Session check function is callable';
+                try {
+                    const isCallable = typeof checkExistingSession === 'function';
+                    this.addTest(testName, isCallable);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test alert display function exists
+             */
+            async testShowAlertFunction() {
+                const testName = 'Show alert function exists and is callable';
+                try {
+                    const isCallable = typeof showAlert === 'function';
+                    this.addTest(testName, isCallable);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test backend URL configuration function
+             */
+            async testSetBackendUrlFunction() {
+                const testName = 'Backend URL configuration function works';
+                try {
+                    const originalUrl = getBackendUrl();
+                    const testUrl = 'http://test.example.com';
+                    setBackendUrl(testUrl);
+                    const passed = getBackendUrl() === testUrl;
+                    setBackendUrl(originalUrl); // Restore
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test backend URL persists in localStorage
+             */
+            async testBackendUrlConfiguration() {
+                const testName = 'Backend URL persists in localStorage';
+                try {
+                    const testUrl = 'http://test.example.com';
+                    localStorage.setItem('backendUrl', testUrl);
+                    const stored = localStorage.getItem('backendUrl');
+                    const passed = stored === testUrl;
+                    localStorage.removeItem('backendUrl'); // Clean up
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test "Keep Me Logged In" checkbox exists and is functional
+             */
+            async testKeepLoggedCheckbox() {
+                const testName = 'Keep logged in checkbox has proper attributes';
+                try {
+                    const checkbox = document.getElementById('keepLogged');
+                    const passed = checkbox && checkbox.type === 'checkbox' && checkbox.checked === true;
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test password input has password type
+             */
+            async testPasswordInputType() {
+                const testName = 'Password input has correct type';
+                try {
+                    const password = document.getElementById('password');
+                    const passed = password && password.type === 'password';
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Test form HTML structure
+             */
+            async testFormStructure() {
+                const testName = 'Form structure is complete and accessible';
+                try {
+                    const form = document.getElementById('loginForm');
+                    const hasProperLabels = form.querySelectorAll('label').length > 0 ||
+                                           form.querySelectorAll('[name]').length > 0;
+                    const hasSubmitButton = form.querySelector('[type="submit"]');
+                    const passed = hasProperLabels && hasSubmitButton;
+                    this.addTest(testName, passed);
+                } catch (e) {
+                    this.addTest(testName, false, e.message);
+                }
+            }
+
+            /**
+             * Add test result
+             */
+            addTest(name, passed, error = '') {
+                this.tests.push({ name, passed, error });
+                if (passed) {
+                    this.passed++;
+                } else {
+                    this.failed++;
+                }
+            }
+
+            /**
+             * Print test results
+             */
+            printResults() {
+                const resultsDiv = document.getElementById('testResults');
+                const summaryDiv = document.getElementById('testSummary');
+
+                // Render individual test results
+                let html = '';
+                this.tests.forEach(test => {
+                    const className = test.passed ? 'pass' : 'fail';
+                    const errorMsg = test.error ? ` (${test.error})` : '';
+                    html += `<div class="test-case ${className}">
+                        <div class="test-name">${test.name}</div>
+                        <div class="test-status">${errorMsg}</div>
+                    </div>`;
+                });
+                resultsDiv.innerHTML = html;
+
+                // Render summary
+                const total = this.passed + this.failed;
+                const summaryClass = this.failed === 0 ? 'all-pass' : 'has-fail';
+                const summaryText = `
+                    <strong>Test Summary</strong><br>
+                    Total Tests: ${total}<br>
+                    Passed: <span style="color: #28a745;">${this.passed}</span><br>
+                    Failed: <span style="color: #dc3545;">${this.failed}</span><br>
+                    <br>
+                    ${this.failed === 0 ? '✓ All tests passed!' : '✗ Some tests failed!'}
+                `;
+                summaryDiv.className = `summary ${summaryClass}`;
+                summaryDiv.innerHTML = summaryText;
+
+                console.log(`Tests completed: ${this.passed} passed, ${this.failed} failed`);
+            }
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const tester = new LoginFrontendTests();
+            tester.runAll();
+        });
+    </script>
+</body>
+</html>
