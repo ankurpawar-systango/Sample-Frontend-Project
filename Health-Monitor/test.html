@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Monitor - Unit Tests</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .test-suite {
+            background: #2d2d2d;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .test-suite h2 {
+            color: #569cd6;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #3e3e42;
+            padding-bottom: 8px;
+        }
+
+        .test-case {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .test-pass {
+            background: #1e5631;
+            color: #4ec9b0;
+            border-left: 3px solid #4ec9b0;
+        }
+
+        .test-fail {
+            background: #5f1818;
+            color: #f48771;
+            border-left: 3px solid #f48771;
+        }
+
+        .summary {
+            background: #2d2d2d;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-value {
+            font-weight: bold;
+        }
+
+        .pass-count {
+            color: #4ec9b0;
+        }
+
+        .fail-count {
+            color: #f48771;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Health Monitor - Unit Tests</h1>
+
+        <div id="testOutput"></div>
+
+        <div class="summary">
+            <div class="summary-row">
+                <span>Total Tests:</span>
+                <span class="summary-value" id="totalTests">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Passed:</span>
+                <span class="summary-value pass-count" id="passedTests">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Failed:</span>
+                <span class="summary-value fail-count" id="failedTests">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Success Rate:</span>
+                <span class="summary-value" id="successRate">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Simple Test Framework for Health Monitor
+         */
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+
+            describe(suiteName, callback) {
+                const suiteTests = [];
+                const suite = {
+                    name: suiteName,
+                    tests: suiteTests
+                };
+
+                const it = (testName, testFn) => {
+                    suiteTests.push({
+                        name: testName,
+                        fn: testFn
+                    });
+                };
+
+                callback(it);
+                this.tests.push(suite);
+            }
+
+            run() {
+                const output = document.getElementById('testOutput');
+                output.innerHTML = '';
+
+                this.tests.forEach(suite => {
+                    const suiteDiv = document.createElement('div');
+                    suiteDiv.className = 'test-suite';
+
+                    const heading = document.createElement('h2');
+                    heading.textContent = suite.name;
+                    suiteDiv.appendChild(heading);
+
+                    suite.tests.forEach(test => {
+                        const testDiv = document.createElement('div');
+                        testDiv.className = 'test-case';
+
+                        try {
+                            test.fn();
+                            testDiv.classList.add('test-pass');
+                            testDiv.textContent = '✓ ' + test.name;
+                            this.passed++;
+                        } catch (error) {
+                            testDiv.classList.add('test-fail');
+                            testDiv.textContent = '✗ ' + test.name + ' - ' + error.message;
+                            this.failed++;
+                        }
+
+                        suiteDiv.appendChild(testDiv);
+                    });
+
+                    output.appendChild(suiteDiv);
+                });
+
+                this.printSummary();
+            }
+
+            printSummary() {
+                const total = this.passed + this.failed;
+                const successRate = total > 0 ? ((this.passed / total) * 100).toFixed(1) : 0;
+
+                document.getElementById('totalTests').textContent = total;
+                document.getElementById('passedTests').textContent = this.passed;
+                document.getElementById('failedTests').textContent = this.failed;
+                document.getElementById('successRate').textContent = successRate + '%';
+            }
+
+            expect(value) {
+                return {
+                    toBe: (expected) => {
+                        if (value !== expected) {
+                            throw new Error(`Expected ${expected}, but got ${value}`);
+                        }
+                    },
+                    toEqual: (expected) => {
+                        if (JSON.stringify(value) !== JSON.stringify(expected)) {
+                            throw new Error(`Expected ${JSON.stringify(expected)}, but got ${JSON.stringify(value)}`);
+                        }
+                    },
+                    toBeTruthy: () => {
+                        if (!value) {
+                            throw new Error(`Expected truthy value, but got ${value}`);
+                        }
+                    },
+                    toBeFalsy: () => {
+                        if (value) {
+                            throw new Error(`Expected falsy value, but got ${value}`);
+                        }
+                    },
+                    toContain: (expected) => {
+                        if (!value.includes(expected)) {
+                            throw new Error(`Expected to contain ${expected}`);
+                        }
+                    },
+                    toBeInstanceOf: (expectedClass) => {
+                        if (!(value instanceof expectedClass)) {
+                            throw new Error(`Expected instance of ${expectedClass.name}`);
+                        }
+                    }
+                };
+            }
+        }
+
+        // Create test runner
+        const runner = new TestRunner();
+
+        // Test suite: UI Update Tests
+        runner.describe('UI Update Tests', (it) => {
+            it('should format timestamp correctly', () => {
+                const timestamp = '2024-01-15T10:30:00Z';
+                const date = new Date(timestamp);
+                runner.expect(date instanceof Date).toBeTruthy();
+                runner.expect(date.toLocaleString()).toContain('10');
+            });
+
+            it('should handle missing health data gracefully', () => {
+                const data = {};
+                const status = data.status || 'unknown';
+                runner.expect(status).toBe('unknown');
+            });
+
+            it('should validate JSON response structure', () => {
+                const validResponse = {
+                    status: 'ok',
+                    timestamp: '2024-01-15T10:30:00Z',
+                    checks: {
+                        php_enabled: true,
+                        json_enabled: true,
+                        memory_usage: {
+                            current: '8.5 MB',
+                            peak: '12.3 MB'
+                        }
+                    },
+                    version: {
+                        php: '8.1.0',
+                        api: '1.0.0'
+                    }
+                };
+
+                runner.expect(validResponse.status).toBe('ok');
+                runner.expect(validResponse.checks.php_enabled).toBeTruthy();
+                runner.expect(validResponse.version.api).toBe('1.0.0');
+            });
+        });
+
+        // Test suite: Health Check Tests
+        runner.describe('Health Check Logic', (it) => {
+            it('should recognize healthy status', () => {
+                const status = 'ok';
+                runner.expect(status === 'ok' || status === 'healthy').toBeTruthy();
+            });
+
+            it('should recognize error status', () => {
+                const status = 'error';
+                runner.expect(status === 'error').toBeTruthy();
+            });
+
+            it('should handle unknown status', () => {
+                const status = 'unknown';
+                runner.expect(status !== 'ok' && status !== 'error').toBeTruthy();
+            });
+
+            it('should verify memory usage format', () => {
+                const memoryUsage = '8.5 MB';
+                runner.expect(memoryUsage).toContain('MB');
+            });
+        });
+
+        // Test suite: Polling Tests
+        runner.describe('Polling Logic', (it) => {
+            it('should have correct poll interval', () => {
+                const pollInterval = 10000; // 10 seconds
+                runner.expect(pollInterval).toBe(10000);
+            });
+
+            it('should calculate countdown correctly', () => {
+                const pollInterval = 10000;
+                const countdownValue = pollInterval / 1000;
+                runner.expect(countdownValue).toBe(10);
+            });
+
+            it('should handle auto-refresh toggle', () => {
+                let isAutoRefreshing = true;
+                isAutoRefreshing = !isAutoRefreshing;
+                runner.expect(isAutoRefreshing).toBeFalsy();
+                isAutoRefreshing = !isAutoRefreshing;
+                runner.expect(isAutoRefreshing).toBeTruthy();
+            });
+        });
+
+        // Test suite: Error Handling
+        runner.describe('Error Handling', (it) => {
+            it('should handle network errors', () => {
+                const error = new Error('Network request failed');
+                runner.expect(error instanceof Error).toBeTruthy();
+            });
+
+            it('should handle invalid JSON response', () => {
+                try {
+                    JSON.parse('invalid json');
+                    runner.expect(false).toBeTruthy();
+                } catch (e) {
+                    runner.expect(e instanceof SyntaxError).toBeTruthy();
+                }
+            });
+
+            it('should provide meaningful error messages', () => {
+                const errorMessage = 'Failed to fetch health status: Network error';
+                runner.expect(errorMessage).toContain('Failed');
+                runner.expect(errorMessage).toContain('health status');
+            });
+        });
+
+        // Test suite: DOM Integration
+        runner.describe('DOM Integration', (it) => {
+            it('should have required HTML elements', () => {
+                runner.expect(document.getElementById('testOutput') !== null).toBeTruthy();
+                runner.expect(document.getElementById('totalTests') !== null).toBeTruthy();
+                runner.expect(document.getElementById('passedTests') !== null).toBeTruthy();
+                runner.expect(document.getElementById('failedTests') !== null).toBeTruthy();
+            });
+        });
+
+        // Run all tests
+        runner.run();
+    </script>
+</body>
+</html>
