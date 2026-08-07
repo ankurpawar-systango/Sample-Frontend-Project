@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Status Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="container-fluid py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 mb-2">
+                        <i class="fas fa-heartbeat text-danger"></i> Health Status Dashboard
+                    </h1>
+                    <p class="text-muted">Real-time backend service monitoring</p>
+                </div>
+
+                <!-- Status Card -->
+                <div class="card shadow-lg mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="card-title mb-3">Backend Service Status</h3>
+
+                                <!-- Status Badge -->
+                                <div class="mb-3">
+                                    <span id="statusBadge" class="badge bg-secondary fs-6">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                                    </span>
+                                </div>
+
+                                <!-- Status Details -->
+                                <div class="status-details">
+                                    <div class="detail-item mb-2">
+                                        <strong>Status:</strong>
+                                        <span id="statusText" class="text-muted">Checking...</span>
+                                    </div>
+                                    <div class="detail-item mb-2">
+                                        <strong>Message:</strong>
+                                        <span id="messageText" class="text-muted">Checking...</span>
+                                    </div>
+                                    <div class="detail-item mb-2">
+                                        <strong>Timestamp:</strong>
+                                        <span id="timestampText" class="text-muted">--:--:--</span>
+                                    </div>
+                                    <div class="detail-item mb-2">
+                                        <strong>Response Time:</strong>
+                                        <span id="responseTimeText" class="text-muted">-- ms</span>
+                                    </div>
+                                    <div class="detail-item mb-2">
+                                        <strong>PHP Version:</strong>
+                                        <span id="phpVersionText" class="text-muted">Unknown</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Icon -->
+                            <div class="col-md-4 text-center">
+                                <div id="statusIcon" class="status-icon mb-3">
+                                    <i class="fas fa-question-circle fa-3x text-secondary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Controls -->
+                <div class="card shadow-lg">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Monitoring Settings</h5>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="refreshInterval" class="form-label">
+                                    <i class="fas fa-clock"></i> Auto-refresh Interval
+                                </label>
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        id="refreshInterval"
+                                        class="form-control"
+                                        value="5"
+                                        min="1"
+                                        max="60"
+                                    >
+                                    <span class="input-group-text">seconds</span>
+                                </div>
+                                <small class="text-muted">Set to 0 to disable auto-refresh</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="autoRefreshToggle" class="form-label">
+                                    <i class="fas fa-toggle-on"></i> Auto-refresh
+                                </label>
+                                <div>
+                                    <div class="form-check form-switch">
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            id="autoRefreshToggle"
+                                            checked
+                                        >
+                                        <label class="form-check-label" for="autoRefreshToggle">
+                                            Enable auto-refresh
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" id="refreshBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh Now
+                            </button>
+                            <button class="btn btn-outline-secondary" id="clearBtn">
+                                <i class="fas fa-trash"></i> Clear History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status History -->
+                <div class="card shadow-lg mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Check History</h5>
+                        <div id="historyContainer" class="history-container">
+                            <p class="text-muted">No checks performed yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Info -->
+                <div class="card mt-4 bg-light border-0">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-cog"></i> Configuration
+                        </h6>
+                        <p class="small text-muted mb-1">
+                            <strong>Backend Endpoint:</strong>
+                            <code id="endpointUrl">http://localhost/sample-backend-projects/7-health/health.php</code>
+                        </p>
+                        <p class="small text-muted mb-0">
+                            <strong>Method:</strong> GET | <strong>Format:</strong> JSON
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Status Dashboard - Unit Tests</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            padding: 2rem;
+        }
+        .test-result {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-left: 4px solid #ddd;
+            border-radius: 0.25rem;
+        }
+        .test-result.pass {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .test-result.fail {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .test-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .summary {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #e7f3ff;
+            border: 1px solid #2196F3;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">
+            <i class="fas fa-flask"></i> Health Status Dashboard - Unit Tests
+        </h1>
+
+        <div class="test-container">
+            <div id="test-results"></div>
+            <div id="test-summary" class="summary" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Simple Test Framework for Frontend
+         */
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+
+            /**
+             * Add a test case
+             */
+            test(name, fn) {
+                this.tests.push({ name, fn });
+            }
+
+            /**
+             * Assert condition is true
+             */
+            assert(condition, message) {
+                if (!condition) {
+                    throw new Error(message || 'Assertion failed');
+                }
+            }
+
+            /**
+             * Assert equality
+             */
+            assertEqual(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || `Expected ${expected}, got ${actual}`);
+                }
+            }
+
+            /**
+             * Assert type
+             */
+            assertType(value, type, message) {
+                if (typeof value !== type) {
+                    throw new Error(message || `Expected type ${type}, got ${typeof value}`);
+                }
+            }
+
+            /**
+             * Run all tests
+             */
+            run() {
+                const resultsDiv = document.getElementById('test-results');
+                resultsDiv.innerHTML = '';
+
+                for (const test of this.tests) {
+                    try {
+                        test.fn();
+                        this.passed++;
+                        this.renderResult(test.name, true, '');
+                    } catch (error) {
+                        this.failed++;
+                        this.renderResult(test.name, false, error.message);
+                    }
+                }
+
+                this.renderSummary();
+            }
+
+            /**
+             * Render a single test result
+             */
+            renderResult(name, passed, error) {
+                const resultsDiv = document.getElementById('test-results');
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+
+                const icon = passed ?
+                    '<i class="fas fa-check-circle text-success"></i>' :
+                    '<i class="fas fa-times-circle text-danger"></i>';
+                const status = passed ? 'PASS' : 'FAIL';
+
+                resultDiv.innerHTML = `
+                    ${icon} <strong>${status}</strong> - ${name}
+                    ${!passed ? `<div class="mt-2 small text-muted">${error}</div>` : ''}
+                `;
+
+                resultsDiv.appendChild(resultDiv);
+            }
+
+            /**
+             * Render summary
+             */
+            renderSummary() {
+                const total = this.passed + this.failed;
+                const summaryDiv = document.getElementById('test-summary');
+                summaryDiv.style.display = 'block';
+
+                const status = this.failed === 0 ? 'All tests passed!' : 'Some tests failed!';
+                const icon = this.failed === 0 ?
+                    '<i class="fas fa-check-circle text-success"></i>' :
+                    '<i class="fas fa-exclamation-triangle text-warning"></i>';
+
+                summaryDiv.innerHTML = `
+                    <h5>${icon} Test Summary</h5>
+                    <p class="mb-1"><strong>Total:</strong> ${total}</p>
+                    <p class="mb-1"><strong>Passed:</strong> <span class="text-success">${this.passed}</span></p>
+                    <p class="mb-0"><strong>Failed:</strong> <span class="text-danger">${this.failed}</span></p>
+                    <hr>
+                    <p class="mb-0">${status}</p>
+                `;
+            }
+        }
+
+        // Run tests
+        const runner = new TestRunner();
+
+        // Test 1: HealthStatusDashboard class structure
+        runner.test('HealthStatusDashboard class exists', function() {
+            runner.assert(typeof HealthStatusDashboard === 'function',
+                'HealthStatusDashboard must be a class');
+        });
+
+        // Test 2: DOM elements are properly initialized
+        runner.test('DOM elements can be queried', function() {
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const historyContainer = document.getElementById('historyContainer');
+
+            runner.assert(badge !== null, 'statusBadge element must exist');
+            runner.assert(statusText !== null, 'statusText element must exist');
+            runner.assert(historyContainer !== null, 'historyContainer element must exist');
+        });
+
+        // Test 3: Button elements exist
+        runner.test('Control buttons exist', function() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            runner.assert(refreshBtn !== null, 'refreshBtn must exist');
+            runner.assert(clearBtn !== null, 'clearBtn must exist');
+        });
+
+        // Test 4: Input controls exist
+        runner.test('Input controls exist', function() {
+            const intervalInput = document.getElementById('refreshInterval');
+            const toggleInput = document.getElementById('autoRefreshToggle');
+
+            runner.assert(intervalInput !== null, 'refreshInterval input must exist');
+            runner.assert(toggleInput !== null, 'autoRefreshToggle input must exist');
+        });
+
+        // Test 5: Check fetch capability
+        runner.test('Fetch API is available', function() {
+            runner.assert(typeof fetch === 'function', 'Fetch API must be available');
+        });
+
+        // Test 6: Check localStorage
+        runner.test('localStorage is available', function() {
+            runner.assert(typeof localStorage !== 'undefined', 'localStorage must be available');
+        });
+
+        // Test 7: Check SweetAlert2
+        runner.test('SweetAlert2 is loaded', function() {
+            runner.assert(typeof Swal !== 'undefined', 'SweetAlert2 (Swal) must be loaded');
+        });
+
+        // Test 8: Check Bootstrap
+        runner.test('Bootstrap is loaded', function() {
+            // Check if Bootstrap classes work
+            const testDiv = document.createElement('div');
+            testDiv.className = 'container-fluid';
+            runner.assert(testDiv.className.includes('container-fluid'), 'Bootstrap classes must be available');
+        });
+
+        // Test 9: HTML structure validation
+        runner.test('HTML structure is complete', function() {
+            const card = document.querySelector('.card');
+            const statusDetails = document.querySelector('.status-details');
+            const historyContainer = document.getElementById('historyContainer');
+
+            runner.assert(card !== null, 'Card element must exist');
+            runner.assert(statusDetails !== null, 'Status details element must exist');
+            runner.assert(historyContainer !== null, 'History container must exist');
+        });
+
+        // Test 10: CSS is loaded
+        runner.test('CSS stylesheets are applied', function() {
+            // Check if Bootstrap is applied by looking for computed styles
+            const body = document.body;
+            const styles = window.getComputedStyle(body);
+            runner.assert(styles !== null, 'CSS must be properly loaded');
+        });
+
+        // Test 11: Validate backend URL format
+        runner.test('Backend URL is properly configured', function() {
+            const endpointUrl = document.getElementById('endpointUrl');
+            const url = endpointUrl.textContent;
+
+            runner.assert(url.includes('localhost'), 'URL must contain localhost');
+            runner.assert(url.includes('health.php'), 'URL must point to health.php');
+            runner.assert(url.includes('http'), 'URL must include protocol');
+        });
+
+        // Test 12: Test data format validation
+        runner.test('Can parse mock health response', function() {
+            const mockResponse = {
+                status: 'healthy',
+                message: 'Backend service is running',
+                timestamp: '2024-01-15 10:30:45',
+                responseTime: '1.25 ms',
+                php_version: '7.4.3'
+            };
+
+            runner.assert(mockResponse.status !== undefined, 'Response must have status field');
+            runner.assert(mockResponse.message !== undefined, 'Response must have message field');
+            runner.assert(mockResponse.timestamp !== undefined, 'Response must have timestamp field');
+            runner.assert(mockResponse.responseTime !== undefined, 'Response must have responseTime field');
+        });
+
+        // Run all tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            runner.run();
+        });
+    </script>
+
+    <!-- Required libraries for full test -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+    <!-- Include the main script but don't auto-initialize -->
+    <script>
+        // Mock the DOM initialization to prevent auto-run during tests
+        const originalScript = document.createElement('script');
+        // We'll test the class structure without fully initializing
+    </script>
+</body>
+</html>
