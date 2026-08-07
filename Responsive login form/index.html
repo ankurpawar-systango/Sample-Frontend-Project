@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login form</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -15,23 +16,41 @@
             <h1 class="title">Sign Into Account</h1>
             <img class="logo" src="images/logo.png" alt="">
             <div class="form-container">
-                <div class="username">
-                    <img class="icon email-icon" src="icons/email.svg" alt="">
-                    <input type="email" class="user-input" placeholder="E-Mail">
-                </div>
-                <div class="password">
-                    <img class="icon password-icon" src="icons/password lock.svg" alt="">
-                    <input type="password" class="pass-input" placeholder="Password">
-                </div>
-                <div class="keepme">
-                    <input type="checkbox" checked="true">
-                    Keep Me Logged In
-                </div>
-                <button type="submit">Go !</button>
-                <a href="#" class="link">Forgot Password</a>
+                <form id="loginForm">
+                    <div class="username">
+                        <img class="icon email-icon" src="icons/email.svg" alt="">
+                        <input
+                            type="text"
+                            class="user-input"
+                            id="username"
+                            name="username"
+                            placeholder="Username"
+                            required
+                            autocomplete="username">
+                    </div>
+                    <div class="password">
+                        <img class="icon password-icon" src="icons/password lock.svg" alt="">
+                        <input
+                            type="password"
+                            class="pass-input"
+                            id="password"
+                            name="password"
+                            placeholder="Password"
+                            required
+                            autocomplete="current-password">
+                    </div>
+                    <div class="keepme">
+                        <input type="checkbox" id="keepLogged" checked="true">
+                        <label for="keepLogged">Keep Me Logged In</label>
+                    </div>
+                    <button type="submit" id="submitBtn">Go !</button>
+                    <a href="#" class="link">Forgot Password</a>
+                </form>
             </div>
         </div>
     </div>
+
+    <script src="script.js"></script>
 </body>
 
 </html>
