@@ -2,6 +2,8 @@
 
 A responsive HTML dashboard that displays the health status of the backend service with real-time monitoring and history tracking.
 
+**Part of DUAL-30: Create health status monitoring full-stack application**
+
 ## Features
 
 - **Real-time Health Monitoring**: Displays current backend health status
