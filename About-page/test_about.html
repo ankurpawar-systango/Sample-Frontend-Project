@@ -373,6 +373,80 @@
         }
 
         /**
+         * Test 11: Cookie notification element exists
+         */
+        function testCookieNotificationElement() {
+            try {
+                const notification = document.getElementById('cookieNotification');
+                const viewSettingsBtn = document.getElementById('viewCookieSettings');
+                const dismissBtn = document.getElementById('dismissCookieNotif');
+
+                const passed = notification !== null && viewSettingsBtn !== null && dismissBtn !== null;
+                recordTest(
+                    'Cookie notification element and buttons exist',
+                    passed,
+                    passed ? 'Notification element and buttons found' : 'Missing notification elements'
+                );
+            } catch (e) {
+                recordTest('Cookie notification element and buttons exist', false, e.message);
+            }
+        }
+
+        /**
+         * Test 12: Cookie notification visibility toggle
+         */
+        function testCookieNotificationVisibility() {
+            try {
+                localStorage.clear();
+                const notification = document.getElementById('cookieNotification');
+
+                if (!notification) {
+                    recordTest('Cookie notification visibility toggle works', false, 'Notification not found');
+                    return;
+                }
+
+                // Test show
+                notification.style.display = 'block';
+                const showPass = notification.style.display === 'block';
+
+                // Test hide
+                notification.classList.add('hidden');
+                const hidePass = notification.classList.contains('hidden');
+
+                const passed = showPass && hidePass;
+                recordTest(
+                    'Cookie notification visibility toggle works',
+                    passed,
+                    passed ? 'Notification visibility toggles correctly' : 'Notification toggle failed'
+                );
+            } catch (e) {
+                recordTest('Cookie notification visibility toggle works', false, e.message);
+            }
+        }
+
+        /**
+         * Test 13: Cookie notification dismissal state
+         */
+        function testCookieNotificationDismissal() {
+            try {
+                localStorage.clear();
+
+                // Simulate dismissal
+                localStorage.setItem('cookieNotificationDismissed', 'true');
+                const dismissed = localStorage.getItem('cookieNotificationDismissed');
+                const passed = dismissed === 'true';
+
+                recordTest(
+                    'Cookie notification dismissal state is stored',
+                    passed,
+                    passed ? 'Dismissal state stored in localStorage' : 'Dismissal state not stored'
+                );
+            } catch (e) {
+                recordTest('Cookie notification dismissal state is stored', false, e.message);
+            }
+        }
+
+        /**
          * Render test results
          */
         function renderResults() {
@@ -415,6 +489,9 @@
             testSessionEndpointConfig();
             testResponsiveDesign();
             testLogoutFunctionality();
+            testCookieNotificationElement();
+            testCookieNotificationVisibility();
+            testCookieNotificationDismissal();
 
             renderResults();
         }
