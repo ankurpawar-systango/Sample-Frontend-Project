@@ -3,6 +3,13 @@
  *
  * Handles user session display, cookie consent banner,
  * and page initialization for the About page.
+ *
+ * Features:
+ * - User authentication check
+ * - Username and email display
+ * - Cookie consent management
+ * - Granular cookie preference controls
+ * - Authentication-only access
  */
 
 // Configuration
@@ -11,6 +18,8 @@ const CONFIG = {
     BACKEND_URL: localStorage.getItem('backendUrl') || 'http://localhost:3000',
     SESSION_ENDPOINT: '/5-auth/session/',
     LOGIN_PAGE: '../Responsive login form/',
+    // Cookie preferences storage key
+    COOKIE_PREFS_KEY: 'cookiePreferences'
 };
 
 /**
@@ -19,7 +28,94 @@ const CONFIG = {
 document.addEventListener('DOMContentLoaded', function () {
     checkUserSession();
     initializeCookieConsent();
+    setupEventListeners();
 });
+
+/**
+ * Setup event listeners for cookie preference controls
+ */
+function setupEventListeners() {
+    const updateBtn = document.getElementById('updateCookiePrefs');
+    const saveBtn = document.getElementById('saveCookiePrefs');
+    const manageCookiesBtn = document.getElementById('manageCookies');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (updateBtn) {
+        updateBtn.addEventListener('click', toggleCookiePreferences);
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveCookiePreferences);
+    }
+
+    if (manageCookiesBtn) {
+        manageCookiesBtn.addEventListener('click', function() {
+            document.getElementById('cookieBanner').classList.add('hidden');
+            scrollToCookieSection();
+            toggleCookiePreferences();
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+}
+
+/**
+ * Toggle visibility of cookie preference controls
+ */
+function toggleCookiePreferences() {
+    const prefsDiv = document.getElementById('cookiePreferences');
+    if (prefsDiv) {
+        prefsDiv.style.display = prefsDiv.style.display === 'none' ? 'block' : 'none';
+        if (prefsDiv.style.display === 'block') {
+            loadCookiePreferences();
+        }
+    }
+}
+
+/**
+ * Load saved cookie preferences from storage
+ */
+function loadCookiePreferences() {
+    const saved = localStorage.getItem(CONFIG.COOKIE_PREFS_KEY);
+    if (saved) {
+        try {
+            const prefs = JSON.parse(saved);
+            document.getElementById('performanceCookies').checked = prefs.performance || false;
+            document.getElementById('preferenceCookies').checked = prefs.preferences || false;
+        } catch (e) {
+            console.error('Error loading cookie preferences:', e);
+        }
+    }
+}
+
+/**
+ * Save cookie preferences to storage
+ */
+function saveCookiePreferences() {
+    const prefs = {
+        essential: true, // Always true
+        performance: document.getElementById('performanceCookies').checked,
+        preferences: document.getElementById('preferenceCookies').checked,
+        date: new Date().toISOString()
+    };
+
+    localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(prefs));
+    localStorage.setItem('cookieConsent', 'custom');
+    showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved.');
+    toggleCookiePreferences();
+}
+
+/**
+ * Scroll to cookie consent section
+ */
+function scrollToCookieSection() {
+    const section = document.querySelector('.cookie-consent-section');
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+}
 
 /**
  * Check if user is logged in and display their username
@@ -56,12 +152,25 @@ async function checkUserSession() {
  */
 function displayUserInfo(user) {
     const userGreeting = document.getElementById('userGreeting');
+    const userEmail = document.getElementById('userEmail');
     const userInfoSection = document.getElementById('userInfoSection');
 
-    if (userGreeting && user.username) {
-        const username = user.username;
-        userGreeting.textContent = `Welcome, ${username}! 👋`;
+    if (userInfoSection && user.username) {
         userInfoSection.style.display = 'block';
+
+        if (userGreeting) {
+            userGreeting.textContent = user.username || 'User';
+        }
+
+        if (userEmail && user.email) {
+            userEmail.textContent = user.email;
+        }
+
+        // Update avatar with first letter
+        const avatar = document.getElementById('userAvatar');
+        if (avatar && user.username) {
+            avatar.textContent = user.username.charAt(0).toUpperCase();
+        }
     }
 }
 
@@ -86,15 +195,24 @@ function showLoginRequired() {
 
         aboutContainer.appendChild(loginRequired);
     }
+
+    // Also hide the cookie banner and any other content
+    const cookieBanner = document.getElementById('cookieBanner');
+    if (cookieBanner) {
+        cookieBanner.style.display = 'none';
+    }
 }
 
 /**
  * Initialize cookie consent banner
+ * Shows banner only for first-time visitors who haven't made a choice
  */
 function initializeCookieConsent() {
     const cookieBanner = document.getElementById('cookieBanner');
     const acceptBtn = document.getElementById('acceptCookies');
     const declineBtn = document.getElementById('declineCookies');
+
+    if (!cookieBanner) return;
 
     // Check if user has already made a choice
     const cookieConsent = localStorage.getItem('cookieConsent');
@@ -107,9 +225,16 @@ function initializeCookieConsent() {
         cookieBanner.classList.remove('hidden');
     }
 
-    // Handle accept button
+    // Handle accept button - accept all cookies
     if (acceptBtn) {
         acceptBtn.addEventListener('click', function () {
+            const allCookies = {
+                essential: true,
+                performance: true,
+                preferences: true,
+                date: new Date().toISOString()
+            };
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(allCookies));
             localStorage.setItem('cookieConsent', 'accepted');
             localStorage.setItem('cookieConsentDate', new Date().toISOString());
             hideCookieBanner();
@@ -117,24 +242,34 @@ function initializeCookieConsent() {
         });
     }
 
-    // Handle decline button
+    // Handle decline button - accept only essential cookies
     if (declineBtn) {
         declineBtn.addEventListener('click', function () {
+            const essentialOnly = {
+                essential: true,
+                performance: false,
+                preferences: false,
+                date: new Date().toISOString()
+            };
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(essentialOnly));
             localStorage.setItem('cookieConsent', 'declined');
             localStorage.setItem('cookieConsentDate', new Date().toISOString());
             hideCookieBanner();
-            showAlert('info', 'Understood', 'You have declined cookies. Some features may not work optimally.');
+            showAlert('info', 'Understood', 'You have declined optional cookies. Essential cookies are still used for basic functionality.');
         });
     }
 }
 
 /**
- * Hide the cookie banner
+ * Hide the cookie banner with animation
  */
 function hideCookieBanner() {
     const cookieBanner = document.getElementById('cookieBanner');
     if (cookieBanner) {
-        cookieBanner.classList.add('hidden');
+        cookieBanner.style.animation = 'slideDownBanner 0.3s ease-in';
+        setTimeout(() => {
+            cookieBanner.classList.add('hidden');
+        }, 300);
     }
 }
 
@@ -145,32 +280,66 @@ function hideCookieBanner() {
  * @param {string} text - Alert message
  */
 function showAlert(icon, title, text) {
-    Swal.fire({
-        icon: icon,
-        title: title,
-        text: text,
-        confirmButtonColor: '#667eea',
-        timer: 2000,
-        timerProgressBar: true
-    });
-}
-
-/**
- * Handle logout
- */
-function handleLogout() {
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            // Clear session data if any
-            localStorage.removeItem('userData');
-            // Redirect to login page
-            window.location.href = CONFIG.LOGIN_PAGE;
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: icon,
+            title: title,
+            text: text,
+            confirmButtonColor: '#667eea',
+            timer: 2500,
+            timerProgressBar: true,
+            allowOutsideClick: true,
+            allowEscapeKey: true
         });
+    } else {
+        // Fallback to console log if SweetAlert is not available
+        console.log(`${icon.toUpperCase()}: ${title} - ${text}`);
     }
 }
 
-// Initialize logout handler
-document.addEventListener('DOMContentLoaded', handleLogout);
+/**
+ * Handle logout - clears session and redirects to login
+ */
+function handleLogout(e) {
+    if (e) {
+        e.preventDefault();
+    }
+
+    // Clear all session-related data
+    localStorage.removeItem('userData');
+    localStorage.removeItem('sessionToken');
+    sessionStorage.clear();
+
+    // Show logout message
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Logged Out',
+            text: 'You have been successfully logged out.',
+            confirmButtonColor: '#667eea',
+            timer: 1500,
+            timerProgressBar: true,
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then(() => {
+            window.location.href = CONFIG.LOGIN_PAGE;
+        });
+    } else {
+        // Fallback if SweetAlert is not available
+        window.location.href = CONFIG.LOGIN_PAGE;
+    }
+}
+
+// Add slide down animation for cookie banner
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideDownBanner {
+        from {
+            transform: translateY(0);
+        }
+        to {
+            transform: translateY(100%);
+        }
+    }
+`;
+document.head.appendChild(style);

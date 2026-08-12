@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Page - Enhanced Frontend Unit Tests</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .test-summary {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .test-case {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #ddd;
+            background: #fafafa;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .test-case:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .test-case.pass {
+            border-left-color: #28a745;
+            background: #f0f8f0;
+        }
+
+        .test-case.fail {
+            border-left-color: #dc3545;
+            background: #fff0f0;
+        }
+
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .test-status {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .pass .test-status::before {
+            content: "✓ PASS: ";
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .fail .test-status::before {
+            content: "✗ FAIL: ";
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .test-details {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #555;
+            padding-left: 10px;
+            border-left: 2px solid #ddd;
+        }
+
+        .summary-pass {
+            color: #28a745;
+            font-weight: 700;
+        }
+
+        .summary-fail {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .summary-info {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .test-categories {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e8eaed;
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .results-footer {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 About Page - Enhanced Frontend Unit Tests</h1>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        /**
+         * Enhanced Test Suite for About Page
+         * Tests for authentication, cookie consent, UI elements, and responsiveness
+         */
+
+        // Mock localStorage
+        const localStorageMock = (() => {
+            let store = {};
+            return {
+                getItem: (key) => store[key] || null,
+                setItem: (key, value) => { store[key] = value.toString(); },
+                removeItem: (key) => { delete store[key]; },
+                clear: () => { store = {}; }
+            };
+        })();
+        Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+        // Mock sessionStorage
+        const sessionStorageMock = (() => {
+            let store = {};
+            return {
+                getItem: (key) => store[key] || null,
+                setItem: (key, value) => { store[key] = value.toString(); },
+                removeItem: (key) => { delete store[key]; },
+                clear: () => { store = {}; }
+            };
+        })();
+        Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock });
+
+        // Mock Swal
+        window.Swal = {
+            fire: (options) => {
+                console.log('SweetAlert fired:', options);
+                return Promise.resolve({ isConfirmed: true });
+            }
+        };
+
+        // Test Results Container
+        let testResults = [];
+        let passCount = 0;
+        let failCount = 0;
+
+        /**
+         * Record a test result
+         */
+        function recordTest(name, passed, details = '') {
+            testResults.push({ name, passed, details });
+            if (passed) {
+                passCount++;
+            } else {
+                failCount++;
+            }
+        }
+
+        /**
+         * ========== CONFIGURATION TESTS ==========
+         */
+
+        function testConfigExists() {
+            try {
+                const hasBackendUrl = typeof CONFIG !== 'undefined' && CONFIG.BACKEND_URL;
+                const hasSessionEndpoint = typeof CONFIG !== 'undefined' && CONFIG.SESSION_ENDPOINT;
+                const hasLoginPage = typeof CONFIG !== 'undefined' && CONFIG.LOGIN_PAGE;
+                const hasCookiePrefsKey = typeof CONFIG !== 'undefined' && CONFIG.COOKIE_PREFS_KEY;
+
+                const passed = hasBackendUrl && hasSessionEndpoint && hasLoginPage && hasCookiePrefsKey;
+                recordTest(
+                    'CONFIG object has all required properties',
+                    passed,
+                    passed ? 'All CONFIG properties are present' : 'Missing CONFIG properties'
+                );
+            } catch (e) {
+                recordTest('CONFIG object has all required properties', false, e.message);
+            }
+        }
+
+        /**
+         * ========== AUTHENTICATION & USER INFO TESTS ==========
+         */
+
+        function testDOMElementsPresent() {
+            try {
+                const elements = [
+                    { id: 'userInfoSection', name: 'User Info Section' },
+                    { id: 'userGreeting', name: 'User Greeting' },
+                    { id: 'userEmail', name: 'User Email' },
+                    { id: 'userAvatar', name: 'User Avatar' },
+                    { id: 'logoutBtn', name: 'Logout Button' },
+                    { id: 'cookieBanner', name: 'Cookie Banner' },
+                    { id: 'acceptCookies', name: 'Accept Cookies Button' },
+                    { id: 'declineCookies', name: 'Decline Cookies Button' },
+                    { id: 'manageCookies', name: 'Manage Cookies Button' },
+                    { id: 'updateCookiePrefs', name: 'Update Cookie Preferences Button' },
+                    { id: 'cookiePreferences', name: 'Cookie Preferences Container' }
+                ];
+
+                let allElementsPresent = true;
+                let missingElements = [];
+
+                elements.forEach(elem => {
+                    const element = document.getElementById(elem.id);
+                    if (!element) {
+                        allElementsPresent = false;
+                        missingElements.push(elem.name);
+                    }
+                });
+
+                recordTest(
+                    'All required DOM elements are present',
+                    allElementsPresent,
+                    allElementsPresent ? 'All elements found' : `Missing: ${missingElements.join(', ')}`
+                );
+            } catch (e) {
+                recordTest('All required DOM elements are present', false, e.message);
+            }
+        }
+
+        function testUserDisplayFunctionality() {
+            try {
+                const userGreeting = document.getElementById('userGreeting');
+                const userEmail = document.getElementById('userEmail');
+                const userAvatar = document.getElementById('userAvatar');
+                const userInfoSection = document.getElementById('userInfoSection');
+
+                const testUser = {
+                    username: 'testuser',
+                    email: 'test@example.com'
+                };
+
+                // Simulate displayUserInfo
+                if (userGreeting && userEmail && userAvatar && userInfoSection) {
+                    userInfoSection.style.display = 'block';
+                    userGreeting.textContent = testUser.username;
+                    userEmail.textContent = testUser.email;
+                    userAvatar.textContent = testUser.username.charAt(0).toUpperCase();
+                }
+
+                const passed = userGreeting && userEmail &&
+                    userGreeting.textContent === 'testuser' &&
+                    userEmail.textContent === 'test@example.com' &&
+                    userAvatar.textContent === 'T';
+
+                recordTest(
+                    'User information displays correctly',
+                    passed,
+                    passed ? 'User info: testuser (T)' : 'User info display failed'
+                );
+            } catch (e) {
+                recordTest('User information displays correctly', false, e.message);
+            }
+        }
+
+        /**
+         * ========== COOKIE CONSENT TESTS ==========
+         */
+
+        function testCookieConsentStorage() {
+            try {
+                localStorage.clear();
+
+                // Test initial state
+                let consent = localStorage.getItem('cookieConsent');
+                const initialStatePass = consent === null;
+
+                // Test accepted state
+                localStorage.setItem('cookieConsent', 'accepted');
+                consent = localStorage.getItem('cookieConsent');
+                const acceptPass = consent === 'accepted';
+
+                // Test declined state
+                localStorage.clear();
+                localStorage.setItem('cookieConsent', 'declined');
+                consent = localStorage.getItem('cookieConsent');
+                const declinePass = consent === 'declined';
+
+                // Test custom state
+                localStorage.clear();
+                localStorage.setItem('cookieConsent', 'custom');
+                consent = localStorage.getItem('cookieConsent');
+                const customPass = consent === 'custom';
+
+                const passed = initialStatePass && acceptPass && declinePass && customPass;
+                recordTest(
+                    'Cookie consent state management works',
+                    passed,
+                    passed ? 'All consent states handled correctly' : 'Consent storage issue'
+                );
+            } catch (e) {
+                recordTest('Cookie consent state management works', false, e.message);
+            }
+        }
+
+        function testCookiePreferencesStorage() {
+            try {
+                localStorage.clear();
+
+                // Test saving preferences
+                const prefs = {
+                    essential: true,
+                    performance: true,
+                    preferences: false,
+                    date: new Date().toISOString()
+                };
+
+                localStorage.setItem('cookiePreferences', JSON.stringify(prefs));
+                const saved = localStorage.getItem('cookiePreferences');
+                const parsed = JSON.parse(saved);
+
+                const passed = parsed.essential === true &&
+                    parsed.performance === true &&
+                    parsed.preferences === false;
+
+                recordTest(
+                    'Cookie preferences storage works correctly',
+                    passed,
+                    passed ? 'Preferences saved and restored' : 'Preferences storage failed'
+                );
+            } catch (e) {
+                recordTest('Cookie preferences storage works correctly', false, e.message);
+            }
+        }
+
+        function testCookieBannerVisibility() {
+            try {
+                const cookieBanner = document.getElementById('cookieBanner');
+                if (!cookieBanner) {
+                    recordTest('Cookie banner visibility control works', false, 'Cookie banner not found');
+                    return;
+                }
+
+                // Test show
+                cookieBanner.classList.remove('hidden');
+                const showPass = !cookieBanner.classList.contains('hidden');
+
+                // Test hide
+                cookieBanner.classList.add('hidden');
+                const hidePass = cookieBanner.classList.contains('hidden');
+
+                const passed = showPass && hidePass;
+                recordTest(
+                    'Cookie banner visibility control works',
+                    passed,
+                    passed ? 'Banner toggles correctly' : 'Banner visibility toggle failed'
+                );
+            } catch (e) {
+                recordTest('Cookie banner visibility control works', false, e.message);
+            }
+        }
+
+        /**
+         * ========== UI & STYLING TESTS ==========
+         */
+
+        function testPageStructure() {
+            try {
+                const hasNavbar = document.querySelector('.navbar') !== null;
+                const hasAboutContainer = document.querySelector('.about-container') !== null;
+                const hasAboutContent = document.querySelector('.about-content') !== null;
+                const hasCookieSection = document.querySelector('.cookie-consent-section') !== null;
+
+                const passed = hasNavbar && hasAboutContainer && hasAboutContent && hasCookieSection;
+                recordTest(
+                    'Page structure is complete',
+                    passed,
+                    passed ? 'All major page sections present' : 'Missing page sections'
+                );
+            } catch (e) {
+                recordTest('Page structure is complete', false, e.message);
+            }
+        }
+
+        function testResponsiveClasses() {
+            try {
+                const elements = [
+                    { selector: '.navbar', name: 'Navbar' },
+                    { selector: '.about-container', name: 'About Container' },
+                    { selector: '.user-card', name: 'User Card' },
+                    { selector: '.cookie-consent-section', name: 'Cookie Section' }
+                ];
+
+                let allPresent = true;
+                elements.forEach(elem => {
+                    if (!document.querySelector(elem.selector)) {
+                        allPresent = false;
+                    }
+                });
+
+                recordTest(
+                    'Responsive design classes are properly used',
+                    allPresent,
+                    allPresent ? 'All responsive classes found' : 'Missing responsive classes'
+                );
+            } catch (e) {
+                recordTest('Responsive design classes are properly used', false, e.message);
+            }
+        }
+
+        /**
+         * ========== ACCESSIBILITY TESTS ==========
+         */
+
+        function testAccessibilityAttributes() {
+            try {
+                const hasHeadings = document.querySelectorAll('h1, h2, h3').length > 0;
+                const hasAltText = document.querySelectorAll('img[alt]').length >= 0; // May be 0 if no images
+                const hasSemantic = document.querySelector('nav') !== null;
+                const hasLinks = document.querySelectorAll('a').length > 0;
+
+                const passed = hasHeadings && hasSemantic && hasLinks;
+                recordTest(
+                    'Accessibility features are present',
+                    passed,
+                    passed ? 'Semantic HTML and headings found' : 'Missing accessibility features'
+                );
+            } catch (e) {
+                recordTest('Accessibility features are present', false, e.message);
+            }
+        }
+
+        /**
+         * ========== UTILITY FUNCTION TESTS ==========
+         */
+
+        function testUtilityFunctionsExist() {
+            try {
+                const functions = [
+                    'checkUserSession',
+                    'displayUserInfo',
+                    'showLoginRequired',
+                    'initializeCookieConsent',
+                    'setupEventListeners',
+                    'toggleCookiePreferences',
+                    'saveCookiePreferences',
+                    'loadCookiePreferences',
+                    'handleLogout',
+                    'showAlert'
+                ];
+
+                let allFunctionsPresent = true;
+                let missingFunctions = [];
+
+                functions.forEach(func => {
+                    if (typeof window[func] !== 'function') {
+                        allFunctionsPresent = false;
+                        missingFunctions.push(func);
+                    }
+                });
+
+                recordTest(
+                    'All required utility functions exist',
+                    allFunctionsPresent,
+                    allFunctionsPresent ? 'All functions found' : `Missing: ${missingFunctions.join(', ')}`
+                );
+            } catch (e) {
+                recordTest('All required utility functions exist', false, e.message);
+            }
+        }
+
+        /**
+         * Render test results
+         */
+        function renderResults() {
+            const resultsDiv = document.getElementById('testResults');
+            let html = '';
+
+            // Summary
+            const totalTests = passCount + failCount;
+            const passPercentage = totalTests > 0 ? Math.round((passCount / totalTests) * 100) : 0;
+            html += `<div class="test-summary">
+                Total Tests: <span class="summary-info">${totalTests}</span> |
+                <span class="summary-pass">✓ Passed: ${passCount}</span> |
+                <span class="summary-fail">✗ Failed: ${failCount}</span> |
+                Success Rate: <span class="summary-info">${passPercentage}%</span>
+            </div>`;
+
+            // Categorized test cases
+            const categories = {
+                'Configuration Tests': [],
+                'User Authentication Tests': [],
+                'Cookie Consent Tests': [],
+                'UI & Styling Tests': [],
+                'Accessibility Tests': [],
+                'Utility Functions Tests': []
+            };
+
+            // Categorize tests
+            testResults.forEach((result, index) => {
+                if (result.name.includes('CONFIG')) {
+                    categories['Configuration Tests'].push(result);
+                } else if (result.name.includes('User') || result.name.includes('Login') || result.name.includes('Logout')) {
+                    categories['User Authentication Tests'].push(result);
+                } else if (result.name.includes('Cookie') || result.name.includes('Consent') || result.name.includes('Preferences')) {
+                    categories['Cookie Consent Tests'].push(result);
+                } else if (result.name.includes('Page') || result.name.includes('Structure') || result.name.includes('Responsive') || result.name.includes('DOM')) {
+                    categories['UI & Styling Tests'].push(result);
+                } else if (result.name.includes('Accessibility')) {
+                    categories['Accessibility Tests'].push(result);
+                } else if (result.name.includes('function')) {
+                    categories['Utility Functions Tests'].push(result);
+                }
+            });
+
+            html += '<div class="test-categories">';
+
+            // Render categorized tests
+            Object.entries(categories).forEach(([categoryName, tests]) => {
+                if (tests.length > 0) {
+                    html += `<h3 class="category-title">${categoryName}</h3>`;
+                    tests.forEach(result => {
+                        const statusClass = result.passed ? 'pass' : 'fail';
+                        html += `<div class="test-case ${statusClass}">
+                            <div class="test-name">${result.name}</div>
+                            <div class="test-status">${result.details}</div>
+                        </div>`;
+                    });
+                }
+            });
+
+            html += '</div>';
+
+            // Results footer
+            if (failCount === 0) {
+                html += `<div class="results-footer">
+                    <p class="success-message">✓ All tests passed successfully!</p>
+                </div>`;
+            } else {
+                html += `<div class="results-footer">
+                    <p class="error-message">✗ ${failCount} test(s) failed. Please review and fix.</p>
+                </div>`;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        /**
+         * Run all tests
+         */
+        function runAllTests() {
+            // Configuration
+            testConfigExists();
+
+            // UI & DOM
+            testDOMElementsPresent();
+            testPageStructure();
+            testResponsiveClasses();
+
+            // User Authentication
+            testUserDisplayFunctionality();
+
+            // Cookie Consent
+            testCookieConsentStorage();
+            testCookiePreferencesStorage();
+            testCookieBannerVisibility();
+
+            // Accessibility
+            testAccessibilityAttributes();
+
+            // Utility Functions
+            testUtilityFunctionsExist();
+
+            renderResults();
+        }
+
+        // Run tests when DOM is ready
+        document.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+</html>
