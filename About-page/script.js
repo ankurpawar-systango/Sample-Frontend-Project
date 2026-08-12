@@ -39,6 +39,8 @@ function setupEventListeners() {
     const saveBtn = document.getElementById('saveCookiePrefs');
     const manageCookiesBtn = document.getElementById('manageCookies');
     const logoutBtn = document.getElementById('logoutBtn');
+    const viewCookieSettingsBtn = document.getElementById('viewCookieSettings');
+    const dismissNotifBtn = document.getElementById('dismissCookieNotif');
 
     if (updateBtn) {
         updateBtn.addEventListener('click', toggleCookiePreferences);
@@ -58,6 +60,18 @@ function setupEventListeners() {
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    if (viewCookieSettingsBtn) {
+        viewCookieSettingsBtn.addEventListener('click', function() {
+            dismissCookieNotification();
+            scrollToCookieSection();
+            toggleCookiePreferences();
+        });
+    }
+
+    if (dismissNotifBtn) {
+        dismissNotifBtn.addEventListener('click', dismissCookieNotification);
     }
 }
 
@@ -105,6 +119,34 @@ function saveCookiePreferences() {
     localStorage.setItem('cookieConsent', 'custom');
     showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved.');
     toggleCookiePreferences();
+}
+
+/**
+ * Dismiss the cookie notification for logged-in users
+ */
+function dismissCookieNotification() {
+    const notification = document.getElementById('cookieNotification');
+    if (notification) {
+        notification.style.animation = 'slideUpNotif 0.3s ease-in';
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 300);
+        // Store dismissal in localStorage to not show again this session
+        localStorage.setItem('cookieNotificationDismissed', 'true');
+    }
+}
+
+/**
+ * Show the cookie notification for logged-in users
+ * Only shows if not previously dismissed in this session
+ */
+function showCookieNotification() {
+    const dismissed = localStorage.getItem('cookieNotificationDismissed');
+    const notification = document.getElementById('cookieNotification');
+
+    if (!dismissed && notification) {
+        notification.style.display = 'block';
+    }
 }
 
 /**
@@ -171,6 +213,9 @@ function displayUserInfo(user) {
         if (avatar && user.username) {
             avatar.textContent = user.username.charAt(0).toUpperCase();
         }
+
+        // Show cookie notification for logged-in users
+        showCookieNotification();
     }
 }
 
@@ -330,7 +375,7 @@ function handleLogout(e) {
     }
 }
 
-// Add slide down animation for cookie banner
+// Add animations for cookie banner and notification
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideDownBanner {
@@ -339,6 +384,17 @@ style.textContent = `
         }
         to {
             transform: translateY(100%);
+        }
+    }
+
+    @keyframes slideUpNotif {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
         }
     }
 `;
