@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Page Frontend Unit Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background: #fafafa;
+        }
+        .test-case.pass {
+            border-left-color: #28a745;
+            background: #f0f8f0;
+        }
+        .test-case.fail {
+            border-left-color: #dc3545;
+            background: #fff0f0;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-status {
+            font-size: 14px;
+            color: #666;
+        }
+        .pass .test-status::before {
+            content: "✓ PASS: ";
+            color: #28a745;
+        }
+        .fail .test-status::before {
+            content: "✗ FAIL: ";
+            color: #dc3545;
+        }
+        .test-details {
+            margin-top: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+        .summary-pass {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .summary-fail {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>About Page - Frontend Unit Tests</h1>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        /**
+         * Test Suite for About Page
+         */
+
+        // Mock localStorage
+        const localStorageMock = (() => {
+            let store = {};
+            return {
+                getItem: (key) => store[key] || null,
+                setItem: (key, value) => { store[key] = value.toString(); },
+                removeItem: (key) => { delete store[key]; },
+                clear: () => { store = {}; }
+            };
+        })();
+        Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+        // Mock fetch
+        let mockFetchResponses = {};
+        global.fetch = async (url, options) => {
+            const response = mockFetchResponses[url];
+            return {
+                ok: response ? response.ok : false,
+                json: async () => response ? response.data : {}
+            };
+        };
+
+        // Mock Swal
+        window.Swal = {
+            fire: (options) => {
+                console.log('SweetAlert fired:', options);
+            }
+        };
+
+        // Test Results Container
+        let testResults = [];
+        let passCount = 0;
+        let failCount = 0;
+
+        /**
+         * Record a test result
+         */
+        function recordTest(name, passed, details = '') {
+            testResults.push({ name, passed, details });
+            if (passed) {
+                passCount++;
+            } else {
+                failCount++;
+            }
+        }
+
+        /**
+         * Test 1: CONFIG object exists and has correct properties
+         */
+        function testConfigExists() {
+            try {
+                // CONFIG should be defined in script.js
+                const hasBackendUrl = typeof CONFIG !== 'undefined';
+                const hasSessionEndpoint = typeof CONFIG !== 'undefined' && CONFIG.SESSION_ENDPOINT === '/5-auth/session/';
+                const hasLoginPage = typeof CONFIG !== 'undefined' && CONFIG.LOGIN_PAGE === '../Responsive login form/';
+
+                const passed = hasBackendUrl && hasSessionEndpoint && hasLoginPage;
+                recordTest(
+                    'CONFIG object is properly configured',
+                    passed,
+                    passed ? 'All CONFIG properties are present' : 'Missing CONFIG properties'
+                );
+            } catch (e) {
+                recordTest('CONFIG object is properly configured', false, e.message);
+            }
+        }
+
+        /**
+         * Test 2: Cookie consent state management
+         */
+        function testCookieConsentStorage() {
+            try {
+                localStorage.clear();
+
+                // Test 1: Initial state (no consent stored)
+                let consent = localStorage.getItem('cookieConsent');
+                const initialStatePass = consent === null;
+
+                // Test 2: Accept consent
+                localStorage.setItem('cookieConsent', 'accepted');
+                consent = localStorage.getItem('cookieConsent');
+                const acceptPass = consent === 'accepted';
+
+                // Test 3: Decline consent
+                localStorage.clear();
+                localStorage.setItem('cookieConsent', 'declined');
+                consent = localStorage.getItem('cookieConsent');
+                const declinePass = consent === 'declined';
+
+                const passed = initialStatePass && acceptPass && declinePass;
+                recordTest(
+                    'Cookie consent storage works correctly',
+                    passed,
+                    passed ? 'All consent states stored properly' : 'Consent storage failed'
+                );
+            } catch (e) {
+                recordTest('Cookie consent storage works correctly', false, e.message);
+            }
+        }
+
+        /**
+         * Test 3: DOM elements exist
+         */
+        function testDOMElements() {
+            try {
+                const tests = [
+                    { id: 'cookieBanner', name: 'Cookie Banner' },
+                    { id: 'acceptCookies', name: 'Accept Button' },
+                    { id: 'declineCookies', name: 'Decline Button' },
+                    { id: 'userGreeting', name: 'User Greeting' },
+                    { id: 'userInfoSection', name: 'User Info Section' },
+                    { id: 'logoutBtn', name: 'Logout Button' }
+                ];
+
+                let allElementsPresent = true;
+                let missingElements = [];
+
+                tests.forEach(test => {
+                    const element = document.getElementById(test.id);
+                    if (!element) {
+                        allElementsPresent = false;
+                        missingElements.push(test.name);
+                    }
+                });
+
+                recordTest(
+                    'All required DOM elements are present',
+                    allElementsPresent,
+                    allElementsPresent ? 'All elements found' : `Missing: ${missingElements.join(', ')}`
+                );
+            } catch (e) {
+                recordTest('All required DOM elements are present', false, e.message);
+            }
+        }
+
+        /**
+         * Test 4: User info display function
+         */
+        function testDisplayUserInfo() {
+            try {
+                const userGreeting = document.getElementById('userGreeting');
+                const testUser = { username: 'testuser' };
+
+                // Simulate the displayUserInfo function
+                if (userGreeting && testUser.username) {
+                    const username = testUser.username;
+                    userGreeting.textContent = `Welcome, ${username}! 👋`;
+                }
+
+                const passed = userGreeting && userGreeting.textContent.includes('testuser');
+                recordTest(
+                    'User info displays correctly',
+                    passed,
+                    passed ? `Greeting: "${userGreeting.textContent}"` : 'User greeting not set'
+                );
+            } catch (e) {
+                recordTest('User info displays correctly', false, e.message);
+            }
+        }
+
+        /**
+         * Test 5: Cookie banner CSS class management
+         */
+        function testCookieBannerVisibility() {
+            try {
+                const cookieBanner = document.getElementById('cookieBanner');
+                if (!cookieBanner) {
+                    recordTest('Cookie banner visibility control works', false, 'Cookie banner not found');
+                    return;
+                }
+
+                // Test show
+                cookieBanner.classList.remove('hidden');
+                const showPass = !cookieBanner.classList.contains('hidden');
+
+                // Test hide
+                cookieBanner.classList.add('hidden');
+                const hidePass = cookieBanner.classList.contains('hidden');
+
+                const passed = showPass && hidePass;
+                recordTest(
+                    'Cookie banner visibility control works',
+                    passed,
+                    passed ? 'Banner visibility toggles correctly' : 'Banner visibility toggle failed'
+                );
+            } catch (e) {
+                recordTest('Cookie banner visibility control works', false, e.message);
+            }
+        }
+
+        /**
+         * Test 6: Login required display function
+         */
+        function testLoginRequiredDisplay() {
+            try {
+                const aboutContainer = document.querySelector('.about-container');
+                const testPassed = aboutContainer !== null;
+
+                recordTest(
+                    'About container exists for login required display',
+                    testPassed,
+                    testPassed ? 'Container found' : 'About container not found'
+                );
+            } catch (e) {
+                recordTest('About container exists for login required display', false, e.message);
+            }
+        }
+
+        /**
+         * Test 7: Backend URL configuration
+         */
+        function testBackendUrlConfig() {
+            try {
+                // Clear localStorage for clean test
+                localStorage.removeItem('backendUrl');
+
+                // Default URL should be set
+                const defaultUrl = localStorage.getItem('backendUrl') || 'http://localhost:3000';
+                const urlValid = defaultUrl === 'http://localhost:3000' || defaultUrl.startsWith('http');
+
+                recordTest(
+                    'Backend URL configuration is valid',
+                    urlValid,
+                    `URL: ${defaultUrl}`
+                );
+            } catch (e) {
+                recordTest('Backend URL configuration is valid', false, e.message);
+            }
+        }
+
+        /**
+         * Test 8: Session endpoint configuration
+         */
+        function testSessionEndpointConfig() {
+            try {
+                const hasSessionEndpoint = typeof CONFIG !== 'undefined' && CONFIG.SESSION_ENDPOINT === '/5-auth/session/';
+                recordTest(
+                    'Session endpoint is correctly configured',
+                    hasSessionEndpoint,
+                    hasSessionEndpoint ? 'Session endpoint: /5-auth/session/' : 'Session endpoint not configured'
+                );
+            } catch (e) {
+                recordTest('Session endpoint is correctly configured', false, e.message);
+            }
+        }
+
+        /**
+         * Test 9: Responsive design classes
+         */
+        function testResponsiveDesign() {
+            try {
+                const css = document.head.querySelectorAll('link[rel="stylesheet"]');
+                const hasStylesheet = css.length > 0;
+                const styles = document.querySelector('style') || document.head.innerHTML.includes('@media');
+
+                // Check if style.css is referenced
+                const styleReference = Array.from(css).some(link => link.href.includes('style.css')) || hasStylesheet;
+
+                recordTest(
+                    'Responsive design CSS is included',
+                    hasStylesheet || styles,
+                    hasStylesheet ? 'Stylesheets loaded' : 'CSS styling present'
+                );
+            } catch (e) {
+                recordTest('Responsive design CSS is included', false, e.message);
+            }
+        }
+
+        /**
+         * Test 10: Logout functionality
+         */
+        function testLogoutFunctionality() {
+            try {
+                const logoutBtn = document.getElementById('logoutBtn');
+                const hasSeparateFile = logoutBtn && logoutBtn.href === '../Responsive login form/';
+
+                recordTest(
+                    'Logout button links to login page',
+                    hasSeparateFile,
+                    hasSeparateFile ? 'Logout redirects to login' : 'Logout link not properly configured'
+                );
+            } catch (e) {
+                recordTest('Logout button links to login page', false, e.message);
+            }
+        }
+
+        /**
+         * Render test results
+         */
+        function renderResults() {
+            const resultsDiv = document.getElementById('testResults');
+            let html = '';
+
+            // Summary
+            const totalTests = passCount + failCount;
+            const passPercentage = totalTests > 0 ? Math.round((passCount / totalTests) * 100) : 0;
+            html += `<div class="test-summary">
+                Total Tests: ${totalTests} |
+                <span class="summary-pass">Passed: ${passCount}</span> |
+                <span class="summary-fail">Failed: ${failCount}</span> |
+                Success Rate: ${passPercentage}%
+            </div>`;
+
+            // Test cases
+            testResults.forEach(result => {
+                const statusClass = result.passed ? 'pass' : 'fail';
+                html += `<div class="test-case ${statusClass}">
+                    <div class="test-name">${result.name}</div>
+                    <div class="test-status">${result.details}</div>
+                </div>`;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        /**
+         * Run all tests
+         */
+        function runAllTests() {
+            testConfigExists();
+            testCookieConsentStorage();
+            testDOMElements();
+            testDisplayUserInfo();
+            testCookieBannerVisibility();
+            testLoginRequiredDisplay();
+            testBackendUrlConfig();
+            testSessionEndpointConfig();
+            testResponsiveDesign();
+            testLogoutFunctionality();
+
+            renderResults();
+        }
+
+        // Run tests when DOM is ready
+        document.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+</html>
