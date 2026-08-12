@@ -11,34 +11,105 @@
 </head>
 
 <body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <span class="nav-brand">About Platform</span>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/privacy" class="nav-link">Privacy</a>
+                <a href="/terms" class="nav-link">Terms</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="about-container">
         <div class="about-content">
             <h1 class="title">About Us</h1>
 
-            <div class="user-info-section" id="userInfoSection">
-                <p id="userGreeting" class="user-greeting">
-                    <!-- Will be populated dynamically -->
-                </p>
-                <a href="../Responsive login form/" class="logout-link" id="logoutBtn">Logout</a>
+            <!-- User Information Section -->
+            <div class="user-info-section" id="userInfoSection" style="display: none;">
+                <div class="user-card">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="user-details">
+                        <p class="user-label">Logged in as:</p>
+                        <p id="userGreeting" class="user-name">
+                            <!-- Will be populated dynamically -->
+                        </p>
+                        <p id="userEmail" class="user-email">
+                            <!-- Will be populated dynamically -->
+                        </p>
+                    </div>
+                </div>
+                <a href="#" class="logout-link" id="logoutBtn">Logout</a>
             </div>
 
+            <!-- About Text Section -->
             <div class="about-text">
+                <h2>Welcome to Our Platform</h2>
                 <p>Welcome to our platform! This is a demonstration of a modern, responsive web application built with HTML, CSS, and JavaScript.</p>
                 <p>Our mission is to provide an intuitive and user-friendly experience for all users. We believe in clean code, responsive design, and accessibility.</p>
+
+                <h3>Platform Features</h3>
+                <ul class="features-list">
+                    <li>User authentication and secure session management</li>
+                    <li>Responsive design for all devices</li>
+                    <li>Cookie consent management</li>
+                    <li>Modern UI/UX with smooth animations</li>
+                    <li>Accessibility compliance</li>
+                </ul>
+            </div>
+
+            <!-- Cookie Consent Section -->
+            <div class="cookie-consent-section">
+                <h3>🍪 Cookie & Consent Settings</h3>
+                <div class="cookie-info">
+                    <p><strong>What are cookies?</strong></p>
+                    <p>Cookies are small text files stored on your device that help us remember your preferences and improve your experience on our website.</p>
+
+                    <p><strong>Types of cookies we use:</strong></p>
+                    <ul class="cookie-types">
+                        <li><strong>Essential Cookies:</strong> Required for basic functionality and security</li>
+                        <li><strong>Performance Cookies:</strong> Help us understand how you use our site</li>
+                        <li><strong>Preference Cookies:</strong> Remember your choices and settings</li>
+                    </ul>
+
+                    <p><strong>Your Privacy Rights:</strong></p>
+                    <p>You have the right to control cookie settings. <a href="/privacy" class="policy-link">View our Privacy Policy</a> for more information about how we handle your data.</p>
+
+                    <div class="cookie-controls">
+                        <button id="updateCookiePrefs" class="btn-secondary">Update Preferences</button>
+                        <div id="cookiePreferences" class="cookie-preferences" style="display: none;">
+                            <label class="cookie-checkbox">
+                                <input type="checkbox" id="essentialCookies" checked disabled>
+                                <span>Essential Cookies (required)</span>
+                            </label>
+                            <label class="cookie-checkbox">
+                                <input type="checkbox" id="performanceCookies">
+                                <span>Performance Cookies</span>
+                            </label>
+                            <label class="cookie-checkbox">
+                                <input type="checkbox" id="preferenceCookies">
+                                <span>Preference Cookies</span>
+                            </label>
+                            <button id="saveCookiePrefs" class="btn-primary">Save Preferences</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Cookie Consent Banner -->
+    <!-- Cookie Consent Banner (for first-time visitors) -->
     <div id="cookieBanner" class="cookie-banner">
         <div class="cookie-content">
             <div class="cookie-text">
                 <h3>🍪 Cookie Consent</h3>
-                <p>We use cookies to improve your experience on our website. By using our site, you consent to our use of cookies.</p>
+                <p>We use cookies to improve your experience on our website. By using our site, you consent to our use of cookies. <a href="/privacy" class="cookie-link">Learn more</a></p>
             </div>
             <div class="cookie-actions">
                 <button id="acceptCookies" class="btn-accept">Accept</button>
                 <button id="declineCookies" class="btn-decline">Decline</button>
+                <button id="manageCookies" class="btn-manage">Manage Preferences</button>
             </div>
         </div>
     </div>
