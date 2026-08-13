@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Status Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Backend Health Monitor</h1>
+            <p class="subtitle">Real-time health status monitoring</p>
+        </div>
+
+        <div class="status-section">
+            <div class="status-indicator" id="statusIndicator">
+                <div class="status-dot loading"></div>
+                <span class="status-text">Loading...</span>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-item">
+                <label>Status:</label>
+                <span id="statusValue" class="value">--</span>
+            </div>
+            <div class="info-item">
+                <label>Last Updated:</label>
+                <span id="timestampValue" class="value timestamp">--</span>
+            </div>
+            <div class="info-item">
+                <label>Next Update In:</label>
+                <span id="nextUpdateValue" class="value countdown">10s</span>
+            </div>
+        </div>
+
+        <div class="checks-panel">
+            <h2>System Checks</h2>
+            <div class="checks-grid">
+                <div class="check-item">
+                    <label>PHP Enabled</label>
+                    <span id="phpEnabledCheck" class="check-status">--</span>
+                </div>
+                <div class="check-item">
+                    <label>JSON Support</label>
+                    <span id="jsonEnabledCheck" class="check-status">--</span>
+                </div>
+                <div class="check-item">
+                    <label>Memory (Current)</label>
+                    <span id="memoryCurrentCheck" class="check-status">--</span>
+                </div>
+                <div class="check-item">
+                    <label>Memory (Peak)</label>
+                    <span id="memoryPeakCheck" class="check-status">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-panel">
+            <h2>Version Information</h2>
+            <div class="version-grid">
+                <div class="version-item">
+                    <label>PHP Version:</label>
+                    <span id="phpVersionValue" class="value">--</span>
+                </div>
+                <div class="version-item">
+                    <label>API Version:</label>
+                    <span id="apiVersionValue" class="value">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="refreshBtn" class="btn btn-primary">Refresh Now</button>
+            <button id="toggleAutoRefresh" class="btn btn-secondary">Pause Auto-Refresh</button>
+        </div>
+
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <p id="errorText"></p>
+        </div>
+
+        <div class="info-message">
+            <p>🔄 Auto-refreshing every 10 seconds | Last check: <span id="lastCheckTime">Never</span></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
