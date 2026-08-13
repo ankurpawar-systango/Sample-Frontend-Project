@@ -1,30 +1,167 @@
+/**
+ * Contact Manager App Script
+ *
+ * Manages contacts stored in localStorage with cookie/preference consent validation.
+ * DL-14: Implements cookie segregation - preferences category
+ *
+ * Features:
+ * - Add, delete, and display contacts
+ * - Persistent storage with localStorage
+ * - Consent validation before storing preferences
+ * - User notification when consent is required
+ */
+
+// Configuration
+const CONFIG = {
+    STORAGE_KEY: 'contacts',
+    CONSENT_PREFS_KEY: 'cookiePreferences',
+    BACKEND_URL: localStorage.getItem('backendUrl') || 'http://localhost:3000'
+};
+
+// Storage Categories
+const STORAGE_CATEGORY = {
+    ESSENTIAL: 'essential',
+    PREFERENCES: 'preferences'
+};
+
 // object for storing a contacts in array for localstorage
 let contacts = [];
 
-/* console.log(contacts); */
+/**
+ * DL-14: Get the current consent level
+ * @returns {Object} The user's consent preferences
+ */
+function getConsentLevel() {
+    const saved = localStorage.getItem(CONFIG.CONSENT_PREFS_KEY);
+    if (saved) {
+        try {
+            const prefs = JSON.parse(saved);
+            return {
+                essential: true,
+                performance: prefs.performance || false,
+                preferences: prefs.preferences || false
+            };
+        } catch (e) {
+            console.error('Error parsing consent preferences:', e);
+        }
+    }
+    return {
+        essential: true,
+        performance: false,
+        preferences: false
+    };
+}
+
+/**
+ * DL-14: Check if storage operation is allowed based on consent
+ * @param {string} category - The storage category (essential, preferences)
+ * @returns {boolean} True if operation is allowed
+ */
+function canUseStorage(category) {
+    const consent = getConsentLevel();
+
+    if (category === STORAGE_CATEGORY.ESSENTIAL) {
+        return true;
+    }
+
+    if (category === STORAGE_CATEGORY.PREFERENCES) {
+        return consent.preferences === true;
+    }
+
+    return false;
+}
+
+/**
+ * DL-14: Show notification when consent is required
+ * @param {string} category - The required storage category
+ */
+function showConsentRequiredNotification(category) {
+    const message = category === STORAGE_CATEGORY.PREFERENCES
+        ? 'Contact storage requires your preference consent. Your contacts cannot be saved.'
+        : 'Storage operation requires consent.';
+
+    console.warn('DL-14: ' + message);
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Consent Required',
+            text: message,
+            confirmButtonColor: '#667eea',
+            confirmButtonText: 'OK'
+        });
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * DL-14: Safely load contacts from localStorage with consent validation
+ * @returns {Array} Array of contacts or empty array if consent not given
+ */
+function loadContactsWithConsent() {
+    if (!canUseStorage(STORAGE_CATEGORY.PREFERENCES)) {
+        console.log('DL-14: Contact loading blocked - preference consent not given');
+        return [];
+    }
+
+    try {
+        const ref = localStorage.getItem(CONFIG.STORAGE_KEY);
+        if (ref) {
+            return JSON.parse(ref);
+        }
+    } catch (e) {
+        console.error('DL-14: Error loading contacts:', e);
+    }
+
+    return [];
+}
+
+/**
+ * DL-14: Safely save contacts to localStorage with consent validation
+ * @param {Array} contactsToSave - Array of contacts to save
+ * @returns {boolean} True if saved successfully
+ */
+function saveContactsWithConsent(contactsToSave) {
+    if (!canUseStorage(STORAGE_CATEGORY.PREFERENCES)) {
+        console.log('DL-14: Contact saving blocked - preference consent not given');
+        showConsentRequiredNotification(STORAGE_CATEGORY.PREFERENCES);
+        return false;
+    }
+
+    try {
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(contactsToSave));
+        return true;
+    } catch (e) {
+        console.error('DL-14: Error saving contacts:', e);
+        return false;
+    }
+}
 
 function renderContact(contact) {
-  /* set item to localStorage to store data */
-  localStorage.setItem("contacts", JSON.stringify(contacts));
+    /* DL-14: Save with consent validation */
+    const saved = saveContactsWithConsent(contacts);
 
-  // selecting the list where we will appending a all node items
-  const list = document.querySelector(".Contact_list");
+    if (!saved && contacts.length > 0) {
+        console.warn('DL-14: Contact was not persisted due to missing consent');
+    }
 
-  const item = document.querySelector(`[data-key='${contact.id}']`);
+    // selecting the list where we will appending a all node items
+    const list = document.querySelector(".Contact_list");
 
-  if (contact.deleted) {
-    // remove the item from the DOM
-    item.remove();
-    return;
-  }
+    const item = document.querySelector(`[data-key='${contact.id}']`);
 
-  // creating new element article
-  const node = document.createElement("article");
-  node.setAttribute("class", "person"); // setting attribute class:"person"
-  node.setAttribute("data-key", contact.id);
-  // adding a image name and dob in article element
-  // we can access the contactObject items with contactObject.objectitem because we rendered a contactObject in renderContact function as a parameter
-  node.innerHTML = `
+    if (contact.deleted) {
+        // remove the item from the DOM
+        item.remove();
+        return;
+    }
+
+    // creating new element article
+    const node = document.createElement("article");
+    node.setAttribute("class", "person");
+    node.setAttribute("data-key", contact.id);
+    node.innerHTML = `
 <img src="${contact.imageurl}">
 <div class="contactdetail">
 <h1><i class="fas fa-user-circle contactIcon"></i> ${contact.name}</h1>
@@ -37,67 +174,70 @@ function renderContact(contact) {
         </svg>
     </button>
 `;
-  // appending a node in list
-  list.append(node);
+    list.append(node);
 }
 
 const list = document.querySelector(".Contact_list");
 list.addEventListener("click", (event) => {
-  if (event.target.classList.contains("js-delete-contact")) {
-    const itemKey = event.target.parentElement.dataset.key;
-    deleteContact(itemKey);
-  }
+    if (event.target.classList.contains("js-delete-contact")) {
+        const itemKey = event.target.parentElement.dataset.key;
+        deleteContact(itemKey);
+    }
 });
 
 function deleteContact(key) {
-  // find the corresponding contactObject in the contacts array
-  const index = contacts.findIndex((item) => item.id === Number(key));
-  // Create a new object with properties of the current contactobject item
-  // and a `deleted` property which is set to true
-  const UpdatedContactObject = {
-    deleted: true,
-    ...contacts[index],
-  };
-  // remove the contactobject item from the array by filtering it out
-  contacts = contacts.filter((item) => item.id !== Number(key));
-  renderContact(UpdatedContactObject);
+    // DL-14: Check consent before deleting
+    if (!canUseStorage(STORAGE_CATEGORY.PREFERENCES)) {
+        console.warn('DL-14: Delete operation blocked - preference consent not given');
+        showConsentRequiredNotification(STORAGE_CATEGORY.PREFERENCES);
+        return;
+    }
+
+    const index = contacts.findIndex((item) => item.id === Number(key));
+    const UpdatedContactObject = {
+        deleted: true,
+        ...contacts[index],
+    };
+    contacts = contacts.filter((item) => item.id !== Number(key));
+    renderContact(UpdatedContactObject);
 }
 
-// function for adding todo
 function addContact(name, email, imageurl, contactnumber, id) {
-  const contactObject = {
-    name: document.getElementById("fullName").value,
-    email: document.getElementById("myEmail").value,
-    imageurl: document.getElementById("imgurl").value,
-    contactnumber: document.getElementById("myTel").value,
-    id: Date.now(),
-  };
+    // DL-14: Check consent before adding
+    if (!canUseStorage(STORAGE_CATEGORY.PREFERENCES)) {
+        console.warn('DL-14: Add contact operation blocked - preference consent not given');
+        showConsentRequiredNotification(STORAGE_CATEGORY.PREFERENCES);
+        return;
+    }
 
-  // push a contactObject in todoItems array for store a data as a array in localstorage
-  contacts.push(contactObject);
-  /* console.log(todoItems); */
-  // rendering contactObject in renderContact function as a prameter
-  renderContact(contactObject);
+    const contactObject = {
+        name: document.getElementById("fullName").value,
+        email: document.getElementById("myEmail").value,
+        imageurl: document.getElementById("imgurl").value,
+        contactnumber: document.getElementById("myTel").value,
+        id: Date.now(),
+    };
+
+    contacts.push(contactObject);
+    renderContact(contactObject);
 }
 
-// add a event listner submit to the form
 const form = document.querySelector(".js-form");
 form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  // when the form is submitted addTodo function is called
-  addContact();
-  form.reset();
+    event.preventDefault();
+    addContact();
+    form.reset();
 });
 
-// adding a add event listner when content is loaded and showing stored data array on the screen
+// DL-14: Load contacts with consent validation on page load
 document.addEventListener("DOMContentLoaded", () => {
-  const ref = localStorage.getItem("contacts");
-  if (ref) {
-    contacts = JSON.parse(ref);
-    contacts.forEach((t) => {
-      renderContact(t);
-    });
-  }
+    contacts = loadContactsWithConsent();
+
+    if (contacts.length > 0) {
+        contacts.forEach((t) => {
+            renderContact(t);
+        });
+    } else if (!canUseStorage(STORAGE_CATEGORY.PREFERENCES)) {
+        console.log('DL-14: Contacts not loaded - preference consent required for storage');
+    }
 });
-
-

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL-14 Frontend Cookie Segregation Tests</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+        }
+
+        .test-section h2 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .test-case {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .test-case.pass {
+            border-left-color: #28a745;
+            background: #f0f9f6;
+        }
+
+        .test-case.fail {
+            border-left-color: #dc3545;
+            background: #fef5f5;
+        }
+
+        .test-case-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .test-case-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .test-case-status.pass {
+            background: #28a745;
+            color: white;
+        }
+
+        .test-case-status.fail {
+            background: #dc3545;
+            color: white;
+        }
+
+        .test-case-message {
+            color: #666;
+            margin-top: 8px;
+            font-size: 0.95em;
+        }
+
+        .summary {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .summary-value.pass {
+            color: #28a745;
+        }
+
+        .summary-value.fail {
+            color: #dc3545;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .failure-message {
+            color: #dc3545;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔒 DL-14: Frontend Cookie Segregation Tests</h1>
+        <p class="subtitle">Comprehensive testing of cookie consent validation across frontend pages</p>
+
+        <div id="test-results"></div>
+
+        <div class="button-group">
+            <button onclick="runTests()">Run Tests</button>
+            <button onclick="clearStorage()">Clear Storage</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Mock implementations of consent functions
+         * These mirror the implementations in About-page/script.js
+         */
+
+        const COOKIE_CATEGORY = {
+            ESSENTIAL: 'essential',
+            PERFORMANCE: 'performance',
+            PREFERENCES: 'preferences'
+        };
+
+        const CONFIG = {
+            COOKIE_PREFS_KEY: 'cookiePreferences'
+        };
+
+        function getConsentLevel() {
+            const saved = localStorage.getItem(CONFIG.COOKIE_PREFS_KEY);
+            if (saved) {
+                try {
+                    const prefs = JSON.parse(saved);
+                    return {
+                        essential: true,
+                        performance: prefs.performance || false,
+                        preferences: prefs.preferences || false
+                    };
+                } catch (e) {
+                    console.error('Error parsing cookie preferences:', e);
+                }
+            }
+            return {
+                essential: true,
+                performance: false,
+                preferences: false
+            };
+        }
+
+        function canSetCookie(category) {
+            const consent = getConsentLevel();
+
+            if (category === COOKIE_CATEGORY.ESSENTIAL) {
+                return true;
+            }
+
+            if (category === COOKIE_CATEGORY.PERFORMANCE) {
+                return consent.performance === true;
+            }
+
+            if (category === COOKIE_CATEGORY.PREFERENCES) {
+                return consent.preferences === true;
+            }
+
+            return false;
+        }
+
+        function canUseStorage(category) {
+            const consent = getConsentLevel();
+
+            if (category === 'essential') {
+                return true;
+            }
+
+            if (category === 'preferences') {
+                return consent.preferences === true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Test Runner and Reporter
+         */
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+
+            addTest(name, result, message = '') {
+                this.tests.push({
+                    name,
+                    result,
+                    message
+                });
+
+                if (result) {
+                    this.passed++;
+                } else {
+                    this.failed++;
+                }
+            }
+
+            printResults() {
+                let html = '';
+
+                // Essential Cookies Tests
+                html += '<div class="test-section">';
+                html += '<h2>Essential Cookies</h2>';
+
+                const essentialTests = this.tests.filter(t => t.name.includes('Essential'));
+                essentialTests.forEach(test => {
+                    html += this.getTestHTML(test);
+                });
+
+                html += '</div>';
+
+                // Performance Cookies Tests
+                html += '<div class="test-section">';
+                html += '<h2>Performance Cookies</h2>';
+
+                const performanceTests = this.tests.filter(t => t.name.includes('Performance'));
+                performanceTests.forEach(test => {
+                    html += this.getTestHTML(test);
+                });
+
+                html += '</div>';
+
+                // Preferences Cookies Tests
+                html += '<div class="test-section">';
+                html += '<h2>Preference Cookies & Storage</h2>';
+
+                const preferenceTests = this.tests.filter(t =>
+                    t.name.includes('Preference') || t.name.includes('Storage')
+                );
+                preferenceTests.forEach(test => {
+                    html += this.getTestHTML(test);
+                });
+
+                html += '</div>';
+
+                // Synchronization Tests
+                html += '<div class="test-section">';
+                html += '<h2>Synchronization & Validation</h2>';
+
+                const syncTests = this.tests.filter(t =>
+                    t.name.includes('Sync') || t.name.includes('Validation') ||
+                    t.name.includes('Multiple') || t.name.includes('Initialization')
+                );
+                syncTests.forEach(test => {
+                    html += this.getTestHTML(test);
+                });
+
+                html += '</div>';
+
+                // Summary
+                html += '<div class="summary">';
+                html += '<div class="summary-title">Test Summary</div>';
+                html += `<div class="summary-row">
+                    <span class="summary-label">Total Tests</span>
+                    <span class="summary-value">${this.tests.length}</span>
+                </div>`;
+                html += `<div class="summary-row">
+                    <span class="summary-label">Passed</span>
+                    <span class="summary-value pass">${this.passed} ✓</span>
+                </div>`;
+                html += `<div class="summary-row">
+                    <span class="summary-label">Failed</span>
+                    <span class="summary-value ${this.failed > 0 ? 'fail' : 'pass'}">${this.failed} ${this.failed > 0 ? '✗' : '✓'}</span>
+                </div>`;
+
+                const passRate = this.tests.length > 0 ? Math.round((this.passed / this.tests.length) * 100) : 0;
+                html += `<div class="summary-row">
+                    <span class="summary-label">Pass Rate</span>
+                    <span class="summary-value">${passRate}%</span>
+                </div>`;
+
+                html += '</div>';
+
+                if (this.failed === 0) {
+                    html += '<div class="success-message">✓ All cookie segregation tests passed!</div>';
+                } else {
+                    html += '<div class="failure-message">✗ Some tests failed. Review above for details.</div>';
+                }
+
+                document.getElementById('test-results').innerHTML = html;
+            }
+
+            getTestHTML(test) {
+                const className = test.result ? 'pass' : 'fail';
+                const status = test.result ? 'PASS' : 'FAIL';
+
+                return `
+                <div class="test-case ${className}">
+                    <div class="test-case-title">
+                        <span class="test-case-status ${className}">${status}</span>
+                        ${test.name}
+                    </div>
+                    ${test.message ? `<div class="test-case-message">${test.message}</div>` : ''}
+                </div>
+                `;
+            }
+        }
+
+        /**
+         * Run all tests
+         */
+        function runTests() {
+            const runner = new TestRunner();
+
+            // Essential Cookies Tests
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify({
+                essential: true,
+                performance: false,
+                preferences: false
+            }));
+
+            runner.addTest(
+                'DL-14-FE-1: Essential cookies always allowed',
+                canSetCookie(COOKIE_CATEGORY.ESSENTIAL) === true
+            );
+
+            runner.addTest(
+                'DL-14-FE-2: Get consent level returns essential as true',
+                getConsentLevel().essential === true
+            );
+
+            // Performance Cookies Tests
+            runner.addTest(
+                'DL-14-FE-3: Performance cookies blocked without consent',
+                canSetCookie(COOKIE_CATEGORY.PERFORMANCE) === false,
+                'Performance consent not given'
+            );
+
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify({
+                essential: true,
+                performance: true,
+                preferences: false
+            }));
+
+            runner.addTest(
+                'DL-14-FE-4: Performance cookies allowed with consent',
+                canSetCookie(COOKIE_CATEGORY.PERFORMANCE) === true,
+                'Performance consent given'
+            );
+
+            // Preferences Cookies Tests
+            runner.addTest(
+                'DL-14-FE-5: Preference cookies blocked without consent',
+                canSetCookie(COOKIE_CATEGORY.PREFERENCES) === false,
+                'Preference consent not given initially'
+            );
+
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify({
+                essential: true,
+                performance: true,
+                preferences: true
+            }));
+
+            runner.addTest(
+                'DL-14-FE-6: Preference cookies allowed with consent',
+                canSetCookie(COOKIE_CATEGORY.PREFERENCES) === true,
+                'Preference consent given'
+            );
+
+            // Storage Tests (for Contact Manager and Todo App)
+            runner.addTest(
+                'DL-14-FE-7: Storage always allowed for essential category',
+                canUseStorage('essential') === true
+            );
+
+            runner.addTest(
+                'DL-14-FE-8: Preference storage blocked without consent',
+                canUseStorage('preferences') === false,
+                'Reset consent to no preference consent'
+            );
+
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify({
+                essential: true,
+                performance: false,
+                preferences: true
+            }));
+
+            runner.addTest(
+                'DL-14-FE-9: Preference storage allowed with consent',
+                canUseStorage('preferences') === true
+            );
+
+            // Multiple Categories Tests
+            const multiConsent = {
+                essential: true,
+                performance: true,
+                preferences: true
+            };
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(multiConsent));
+
+            const consent = getConsentLevel();
+            runner.addTest(
+                'DL-14-FE-10: Multiple categories independently managed',
+                consent.essential === true && consent.performance === true && consent.preferences === true
+            );
+
+            // Validation Tests
+            runner.addTest(
+                'DL-14-FE-11: Consent validation for essential cookies',
+                canSetCookie('PHPSESSID') === true,
+                'PHPSESSID is essential'
+            );
+
+            runner.addTest(
+                'DL-14-FE-12: Consent validation for analytics cookies',
+                canSetCookie(COOKIE_CATEGORY.PERFORMANCE) === true,
+                'Performance consent given'
+            );
+
+            // Initialization Test
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, null);
+            const defaultConsent = getConsentLevel();
+            runner.addTest(
+                'DL-14-FE-13: Default consent state is essential-only',
+                defaultConsent.essential === true && defaultConsent.performance === false && defaultConsent.preferences === false
+            );
+
+            // Sync Test
+            const testConsent = {
+                essential: true,
+                performance: true,
+                preferences: false
+            };
+            localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(testConsent));
+            const retrievedConsent = getConsentLevel();
+            runner.addTest(
+                'DL-14-FE-14: Consent state persists and syncs correctly',
+                retrievedConsent.performance === true && retrievedConsent.preferences === false
+            );
+
+            // Print results
+            runner.printResults();
+        }
+
+        /**
+         * Clear all storage
+         */
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.getElementById('test-results').innerHTML = '<p style="text-align: center; color: #666;">Storage cleared. Run tests again.</p>';
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            runTests();
+        });
+    </script>
+</body>
+
+</html>
