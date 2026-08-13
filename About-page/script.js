@@ -10,6 +10,7 @@
  * - Cookie consent management
  * - Granular cookie preference controls
  * - Authentication-only access
+ * - Cookie segregation by consent level (DL-1)
  */
 
 // Configuration
@@ -17,10 +18,244 @@ const CONFIG = {
     // Default backend URL - can be overridden by environment variable
     BACKEND_URL: localStorage.getItem('backendUrl') || 'http://localhost:3000',
     SESSION_ENDPOINT: '/5-auth/session/',
+    COOKIE_CONSENT_ENDPOINT: '/8-about-me/cookie-consent.php',
     LOGIN_PAGE: '../Responsive login form/',
     // Cookie preferences storage key
     COOKIE_PREFS_KEY: 'cookiePreferences'
 };
+
+/**
+ * Cookie Categories for segregation
+ * @readonly
+ * @enum {string}
+ */
+const COOKIE_CATEGORY = {
+    ESSENTIAL: 'essential',
+    PERFORMANCE: 'performance',
+    PREFERENCES: 'preferences'
+};
+
+/**
+ * Get the current consent level from localStorage
+ * @returns {Object} The user's consent preferences
+ */
+function getConsentLevel() {
+    const saved = localStorage.getItem(CONFIG.COOKIE_PREFS_KEY);
+    if (saved) {
+        try {
+            const prefs = JSON.parse(saved);
+            return {
+                essential: true, // Always true
+                performance: prefs.performance || false,
+                preferences: prefs.preferences || false
+            };
+        } catch (e) {
+            console.error('Error parsing cookie preferences:', e);
+        }
+    }
+    // Default: only essential cookies allowed
+    return {
+        essential: true,
+        performance: false,
+        preferences: false
+    };
+}
+
+/**
+ * Check if a cookie of a specific category can be set based on user consent
+ * @param {string} category - The cookie category (essential, performance, preferences)
+ * @returns {boolean} True if the cookie can be set, false otherwise
+ */
+function canSetCookie(category) {
+    const consent = getConsentLevel();
+
+    // Essential cookies are always allowed
+    if (category === COOKIE_CATEGORY.ESSENTIAL) {
+        return true;
+    }
+
+    // Performance cookies require explicit consent
+    if (category === COOKIE_CATEGORY.PERFORMANCE) {
+        return consent.performance === true;
+    }
+
+    // Preference cookies require explicit consent
+    if (category === COOKIE_CATEGORY.PREFERENCES) {
+        return consent.preferences === true;
+    }
+
+    // Unknown category - deny by default
+    console.warn(`Unknown cookie category: ${category}`);
+    return false;
+}
+
+/**
+ * Set a cookie with consent validation
+ * @param {string} name - Cookie name
+ * @param {string} value - Cookie value
+ * @param {string} category - Cookie category (essential, performance, preferences)
+ * @param {Object} options - Additional cookie options (expires, path, etc.)
+ * @returns {boolean} True if cookie was set, false if denied due to consent
+ */
+function setCookieWithConsent(name, value, category, options = {}) {
+    if (!canSetCookie(category)) {
+        console.log(`Cookie "${name}" not set: consent for "${category}" not given`);
+        showConsentRequiredFeedback(category);
+        return false;
+    }
+
+    let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+
+    if (options.expires) {
+        const date = new Date();
+        date.setTime(date.getTime() + options.expires * 24 * 60 * 60 * 1000);
+        cookieString += `; expires=${date.toUTCString()}`;
+    }
+
+    cookieString += `; path=${options.path || '/'}`;
+
+    if (options.secure) {
+        cookieString += '; secure';
+    }
+
+    if (options.sameSite) {
+        cookieString += `; samesite=${options.sameSite}`;
+    }
+
+    document.cookie = cookieString;
+    return true;
+}
+
+/**
+ * Get a cookie value with consent validation
+ * @param {string} name - Cookie name
+ * @param {string} category - Cookie category (essential, performance, preferences)
+ * @returns {string|null} Cookie value or null if not found or consent not given
+ */
+function getCookieWithConsent(name, category) {
+    if (!canSetCookie(category)) {
+        console.log(`Cookie "${name}" not accessible: consent for "${category}" not given`);
+        return null;
+    }
+
+    const nameEQ = encodeURIComponent(name) + '=';
+    const cookies = document.cookie.split(';');
+
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+            return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Delete a cookie
+ * @param {string} name - Cookie name
+ * @param {string} path - Cookie path
+ */
+function deleteCookie(name, path = '/') {
+    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+}
+
+/**
+ * Show feedback when consent is required but not given
+ * @param {string} category - The required cookie category
+ */
+function showConsentRequiredFeedback(category) {
+    const categoryNames = {
+        [COOKIE_CATEGORY.PERFORMANCE]: 'Performance',
+        [COOKIE_CATEGORY.PREFERENCES]: 'Preference'
+    };
+
+    const categoryName = categoryNames[category] || category;
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Consent Required',
+            text: `${categoryName} cookies require your consent. Please update your cookie preferences to enable this feature.`,
+            confirmButtonColor: '#667eea',
+            showCancelButton: true,
+            confirmButtonText: 'Update Preferences',
+            cancelButtonText: 'Not Now'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                scrollToCookieSection();
+                toggleCookiePreferences();
+            }
+        });
+    } else {
+        console.log(`${categoryName} cookies require consent to be enabled.`);
+    }
+}
+
+/**
+ * Validate consent with backend before cookie operations
+ * @param {string} category - Cookie category to validate
+ * @returns {Promise<Object>} Validation result from backend
+ */
+async function validateConsentWithBackend(category) {
+    try {
+        const consent = getConsentLevel();
+        const response = await fetch(`${CONFIG.BACKEND_URL}${CONFIG.COOKIE_CONSENT_ENDPOINT}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                action: 'validate',
+                consent_level: category,
+                current_consent: consent
+            })
+        });
+
+        if (response.ok) {
+            return await response.json();
+        } else if (response.status === 403) {
+            const error = await response.json();
+            showConsentRequiredFeedback(category);
+            return { status: 'error', message: error.message, allowed: false };
+        }
+
+        return { status: 'error', message: 'Validation failed', allowed: false };
+    } catch (error) {
+        console.error('Backend consent validation failed:', error);
+        // Fall back to local validation
+        return { status: 'success', allowed: canSetCookie(category) };
+    }
+}
+
+/**
+ * Sync cookie preferences with backend
+ * @param {Object} prefs - Cookie preferences object
+ * @returns {Promise<boolean>} True if sync successful
+ */
+async function syncPreferencesWithBackend(prefs) {
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_URL}${CONFIG.COOKIE_CONSENT_ENDPOINT}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                action: 'save',
+                essential: prefs.essential,
+                performance: prefs.performance,
+                preferences: prefs.preferences
+            })
+        });
+
+        return response.ok;
+    } catch (error) {
+        console.error('Failed to sync preferences with backend:', error);
+        return false;
+    }
+}
 
 /**
  * Initialize the About page on load
@@ -105,9 +340,9 @@ function loadCookiePreferences() {
 }
 
 /**
- * Save cookie preferences to storage
+ * Save cookie preferences to storage and sync with backend
  */
-function saveCookiePreferences() {
+async function saveCookiePreferences() {
     const prefs = {
         essential: true, // Always true
         performance: document.getElementById('performanceCookies').checked,
@@ -117,8 +352,38 @@ function saveCookiePreferences() {
 
     localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(prefs));
     localStorage.setItem('cookieConsent', 'custom');
-    showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved.');
+
+    // Clean up cookies that are no longer consented
+    cleanupNonConsentedCookies(prefs);
+
+    // Sync with backend
+    const synced = await syncPreferencesWithBackend(prefs);
+    if (synced) {
+        showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved and synced.');
+    } else {
+        showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved locally.');
+    }
+
     toggleCookiePreferences();
+}
+
+/**
+ * Clean up cookies that user has revoked consent for
+ * @param {Object} prefs - Current cookie preferences
+ */
+function cleanupNonConsentedCookies(prefs) {
+    // List of known non-essential cookies to clean up
+    // In a real application, this would be a more comprehensive list
+    const performanceCookies = ['_ga', '_gid', '_analytics'];
+    const preferenceCookies = ['_theme', '_language', '_preferences'];
+
+    if (!prefs.performance) {
+        performanceCookies.forEach(name => deleteCookie(name));
+    }
+
+    if (!prefs.preferences) {
+        preferenceCookies.forEach(name => deleteCookie(name));
+    }
 }
 
 /**
