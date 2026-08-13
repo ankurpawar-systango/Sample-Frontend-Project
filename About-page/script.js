@@ -194,12 +194,14 @@ function showConsentRequiredFeedback(category) {
 
 /**
  * Validate consent with backend before cookie operations
+ * Checks both local and server-side consent state
+ *
+ * DL-5: Enhanced to properly validate against server consent state
  * @param {string} category - Cookie category to validate
  * @returns {Promise<Object>} Validation result from backend
  */
 async function validateConsentWithBackend(category) {
     try {
-        const consent = getConsentLevel();
         const response = await fetch(`${CONFIG.BACKEND_URL}${CONFIG.COOKIE_CONSENT_ENDPOINT}`, {
             method: 'POST',
             headers: {
@@ -208,24 +210,29 @@ async function validateConsentWithBackend(category) {
             },
             body: JSON.stringify({
                 action: 'validate',
-                consent_level: category,
-                current_consent: consent
+                consent_level: category
             })
         });
 
+        const result = await response.json();
+
         if (response.ok) {
-            return await response.json();
+            console.log(`DL-5: Backend consent validation passed for ${category}`);
+            return result;
         } else if (response.status === 403) {
-            const error = await response.json();
+            console.warn(`DL-5: Backend consent validation failed for ${category}: ${result.message}`);
             showConsentRequiredFeedback(category);
-            return { status: 'error', message: error.message, allowed: false };
+            return { status: 'error', message: result.message, allowed: false };
         }
 
+        console.error('DL-5: Consent validation error:', result.message);
         return { status: 'error', message: 'Validation failed', allowed: false };
     } catch (error) {
-        console.error('Backend consent validation failed:', error);
-        // Fall back to local validation
-        return { status: 'success', allowed: canSetCookie(category) };
+        console.error('DL-5: Backend consent validation failed:', error);
+        // Fall back to local validation only
+        const localAllow = canSetCookie(category);
+        console.log(`DL-5: Falling back to local validation for ${category}: ${localAllow}`);
+        return { status: 'success', allowed: localAllow };
     }
 }
 
@@ -259,12 +266,39 @@ async function syncPreferencesWithBackend(prefs) {
 
 /**
  * Initialize the About page on load
+ *
+ * DL-5: Enhanced initialization with backend sync on page load
  */
 document.addEventListener('DOMContentLoaded', function () {
     checkUserSession();
     initializeCookieConsent();
     setupEventListeners();
+
+    // DL-5: Sync current preferences to backend on page load for consistency
+    syncCurrentPreferencesToBackend();
 });
+
+/**
+ * DL-5: Sync current frontend preferences to backend on page load
+ * Ensures backend and frontend consent state are in sync
+ */
+async function syncCurrentPreferencesToBackend() {
+    const prefs = getConsentLevel();
+
+    // Only sync if we have stored preferences
+    const stored = localStorage.getItem(CONFIG.COOKIE_PREFS_KEY);
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            const synced = await syncPreferencesWithBackend(parsed);
+            if (synced) {
+                console.log('DL-5: Preferences synced to backend on page load');
+            }
+        } catch (e) {
+            console.error('DL-5: Error syncing preferences on page load:', e);
+        }
+    }
+}
 
 /**
  * Setup event listeners for cookie preference controls
@@ -341,6 +375,8 @@ function loadCookiePreferences() {
 
 /**
  * Save cookie preferences to storage and sync with backend
+ *
+ * DL-5: Enhanced with better sync and error handling
  */
 async function saveCookiePreferences() {
     const prefs = {
@@ -350,18 +386,23 @@ async function saveCookiePreferences() {
         date: new Date().toISOString()
     };
 
+    // Save to localStorage immediately
     localStorage.setItem(CONFIG.COOKIE_PREFS_KEY, JSON.stringify(prefs));
     localStorage.setItem('cookieConsent', 'custom');
 
     // Clean up cookies that are no longer consented
+    // This happens BEFORE backend sync to ensure immediate client-side enforcement
     cleanupNonConsentedCookies(prefs);
+    console.log('DL-5: Preferences updated locally and cookies cleaned up:', prefs);
 
-    // Sync with backend
+    // Sync with backend - persists to server session
     const synced = await syncPreferencesWithBackend(prefs);
     if (synced) {
-        showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved and synced.');
+        showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved and synced with the server.');
+        console.log('DL-5: Preferences successfully synced to backend');
     } else {
-        showAlert('success', 'Preferences Saved', 'Your cookie preferences have been saved locally.');
+        showAlert('warning', 'Partial Save', 'Your cookie preferences have been saved locally. Server sync will retry.');
+        console.warn('DL-5: Backend sync failed, preferences saved locally only');
     }
 
     toggleCookiePreferences();
@@ -369,21 +410,78 @@ async function saveCookiePreferences() {
 
 /**
  * Clean up cookies that user has revoked consent for
+ * Immediately deletes cookies when user revokes consent for a category
+ *
+ * DL-5: Enhanced cleanup with comprehensive cookie enumeration
  * @param {Object} prefs - Current cookie preferences
  */
 function cleanupNonConsentedCookies(prefs) {
     // List of known non-essential cookies to clean up
-    // In a real application, this would be a more comprehensive list
-    const performanceCookies = ['_ga', '_gid', '_analytics'];
-    const preferenceCookies = ['_theme', '_language', '_preferences'];
+    const performanceCookies = [
+        '_ga', '_gid', '_analytics',
+        '_gat', '_gat_gtag_*', 'ga_*',
+        '__utma', '__utmb', '__utmc', '__utmz', '__utmv',
+        'analytics', 'analytics_session'
+    ];
+    const preferenceCookies = [
+        '_theme', '_language', '_preferences',
+        'theme_preference', 'language_setting', 'user_preferences',
+        'ui_preferences', 'display_preferences'
+    ];
 
+    // Clean up performance cookies if user revoked consent
     if (!prefs.performance) {
-        performanceCookies.forEach(name => deleteCookie(name));
+        performanceCookies.forEach(name => {
+            deleteCookie(name);
+            deleteCookie(name, '/');
+        });
+        console.log('DL-5: Cleaned up performance tracking cookies');
     }
 
+    // Clean up preference cookies if user revoked consent
     if (!prefs.preferences) {
-        preferenceCookies.forEach(name => deleteCookie(name));
+        preferenceCookies.forEach(name => {
+            deleteCookie(name);
+            deleteCookie(name, '/');
+        });
+        console.log('DL-5: Cleaned up preference cookies');
     }
+
+    // Also scan for any cookies with tracking-related names
+    const allCookies = document.cookie.split(';');
+    allCookies.forEach(cookie => {
+        const cookieName = cookie.split('=')[0].trim();
+
+        // Check if this is a performance cookie and user didn't consent
+        if (!prefs.performance && isPerformanceCookie(cookieName)) {
+            deleteCookie(cookieName);
+        }
+
+        // Check if this is a preference cookie and user didn't consent
+        if (!prefs.preferences && isPreferenceCookie(cookieName)) {
+            deleteCookie(cookieName);
+        }
+    });
+}
+
+/**
+ * DL-5: Determine if a cookie name indicates it's a performance/tracking cookie
+ * @param {string} name - Cookie name
+ * @returns {boolean} True if likely a performance cookie
+ */
+function isPerformanceCookie(name) {
+    const perfIndicators = ['analytics', 'ga', 'utm', 'tracking', 'track', 'metric'];
+    return perfIndicators.some(indicator => name.toLowerCase().includes(indicator));
+}
+
+/**
+ * DL-5: Determine if a cookie name indicates it's a preference cookie
+ * @param {string} name - Cookie name
+ * @returns {boolean} True if likely a preference cookie
+ */
+function isPreferenceCookie(name) {
+    const prefIndicators = ['theme', 'preference', 'language', 'setting', 'pref', 'ui'];
+    return prefIndicators.some(indicator => name.toLowerCase().includes(indicator));
 }
 
 /**
