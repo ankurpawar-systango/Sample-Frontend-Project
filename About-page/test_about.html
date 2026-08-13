@@ -476,6 +476,214 @@
         }
 
         /**
+         * Test 14: Cookie Segregation - getConsentLevel function
+         */
+        function testGetConsentLevel() {
+            try {
+                localStorage.clear();
+
+                // Test 1: Default consent (no preferences saved)
+                let consent = getConsentLevel();
+                const defaultPass = consent.essential === true &&
+                                   consent.performance === false &&
+                                   consent.preferences === false;
+
+                // Test 2: With saved preferences
+                const savedPrefs = {
+                    essential: true,
+                    performance: true,
+                    preferences: false
+                };
+                localStorage.setItem('cookiePreferences', JSON.stringify(savedPrefs));
+                consent = getConsentLevel();
+                const savedPass = consent.essential === true &&
+                                 consent.performance === true &&
+                                 consent.preferences === false;
+
+                const passed = defaultPass && savedPass;
+                recordTest(
+                    'getConsentLevel returns correct consent state',
+                    passed,
+                    passed ? 'Consent level retrieved correctly' : 'Consent level retrieval failed'
+                );
+            } catch (e) {
+                recordTest('getConsentLevel returns correct consent state', false, e.message);
+            }
+        }
+
+        /**
+         * Test 15: Cookie Segregation - canSetCookie function
+         */
+        function testCanSetCookie() {
+            try {
+                localStorage.clear();
+
+                // Test 1: Essential cookies always allowed
+                const essentialPass = canSetCookie('essential') === true;
+
+                // Test 2: Performance cookies denied without consent
+                const perfDeniedPass = canSetCookie('performance') === false;
+
+                // Test 3: Preference cookies denied without consent
+                const prefDeniedPass = canSetCookie('preferences') === false;
+
+                // Test 4: Performance cookies allowed with consent
+                const withConsent = {
+                    essential: true,
+                    performance: true,
+                    preferences: true
+                };
+                localStorage.setItem('cookiePreferences', JSON.stringify(withConsent));
+                const perfAllowedPass = canSetCookie('performance') === true;
+                const prefAllowedPass = canSetCookie('preferences') === true;
+
+                const passed = essentialPass && perfDeniedPass && prefDeniedPass &&
+                              perfAllowedPass && prefAllowedPass;
+                recordTest(
+                    'canSetCookie correctly enforces consent',
+                    passed,
+                    passed ? 'Cookie segregation enforced correctly' : 'Cookie segregation failed'
+                );
+            } catch (e) {
+                recordTest('canSetCookie correctly enforces consent', false, e.message);
+            }
+        }
+
+        /**
+         * Test 16: Cookie Segregation - setCookieWithConsent function
+         */
+        function testSetCookieWithConsent() {
+            try {
+                localStorage.clear();
+
+                // Test 1: Essential cookie can be set
+                const essentialSet = setCookieWithConsent('test_essential', 'value', 'essential');
+                const essentialPass = essentialSet === true;
+
+                // Test 2: Performance cookie denied without consent
+                const perfSet = setCookieWithConsent('test_perf', 'value', 'performance');
+                const perfDeniedPass = perfSet === false;
+
+                // Test 3: Grant consent and try again
+                const withConsent = {
+                    essential: true,
+                    performance: true,
+                    preferences: false
+                };
+                localStorage.setItem('cookiePreferences', JSON.stringify(withConsent));
+                const perfSetWithConsent = setCookieWithConsent('test_perf', 'value', 'performance');
+                const perfAllowedPass = perfSetWithConsent === true;
+
+                const passed = essentialPass && perfDeniedPass && perfAllowedPass;
+                recordTest(
+                    'setCookieWithConsent enforces consent before setting',
+                    passed,
+                    passed ? 'Cookie setting with consent works' : 'Cookie setting with consent failed'
+                );
+
+                // Clean up test cookies
+                deleteCookie('test_essential');
+                deleteCookie('test_perf');
+            } catch (e) {
+                recordTest('setCookieWithConsent enforces consent before setting', false, e.message);
+            }
+        }
+
+        /**
+         * Test 17: Cookie Segregation - getCookieWithConsent function
+         */
+        function testGetCookieWithConsent() {
+            try {
+                localStorage.clear();
+
+                // Set up: Create a test cookie directly
+                document.cookie = 'test_pref_cookie=test_value; path=/';
+
+                // Test 1: Cannot read preference cookie without consent
+                const prefReadDenied = getCookieWithConsent('test_pref_cookie', 'preferences');
+                const deniedPass = prefReadDenied === null;
+
+                // Test 2: Can read with consent
+                const withConsent = {
+                    essential: true,
+                    performance: false,
+                    preferences: true
+                };
+                localStorage.setItem('cookiePreferences', JSON.stringify(withConsent));
+                const prefReadAllowed = getCookieWithConsent('test_pref_cookie', 'preferences');
+                const allowedPass = prefReadAllowed === 'test_value';
+
+                const passed = deniedPass && allowedPass;
+                recordTest(
+                    'getCookieWithConsent enforces consent before reading',
+                    passed,
+                    passed ? 'Cookie reading with consent works' : 'Cookie reading with consent failed'
+                );
+
+                // Clean up
+                deleteCookie('test_pref_cookie');
+            } catch (e) {
+                recordTest('getCookieWithConsent enforces consent before reading', false, e.message);
+            }
+        }
+
+        /**
+         * Test 18: Cookie Segregation - COOKIE_CATEGORY enum exists
+         */
+        function testCookieCategoryEnum() {
+            try {
+                const hasEssential = typeof COOKIE_CATEGORY !== 'undefined' &&
+                                    COOKIE_CATEGORY.ESSENTIAL === 'essential';
+                const hasPerformance = typeof COOKIE_CATEGORY !== 'undefined' &&
+                                      COOKIE_CATEGORY.PERFORMANCE === 'performance';
+                const hasPreferences = typeof COOKIE_CATEGORY !== 'undefined' &&
+                                      COOKIE_CATEGORY.PREFERENCES === 'preferences';
+
+                const passed = hasEssential && hasPerformance && hasPreferences;
+                recordTest(
+                    'COOKIE_CATEGORY enum is properly defined',
+                    passed,
+                    passed ? 'All cookie categories defined' : 'Missing cookie category definitions'
+                );
+            } catch (e) {
+                recordTest('COOKIE_CATEGORY enum is properly defined', false, e.message);
+            }
+        }
+
+        /**
+         * Test 19: Cookie consent endpoint config exists
+         */
+        function testCookieConsentEndpointConfig() {
+            try {
+                const hasEndpoint = typeof CONFIG !== 'undefined' &&
+                                   CONFIG.COOKIE_CONSENT_ENDPOINT === '/8-about-me/cookie-consent.php';
+                recordTest(
+                    'Cookie consent endpoint is configured',
+                    hasEndpoint,
+                    hasEndpoint ? 'Endpoint: /8-about-me/cookie-consent.php' : 'Endpoint not configured'
+                );
+            } catch (e) {
+                recordTest('Cookie consent endpoint is configured', false, e.message);
+            }
+        }
+
+        /**
+         * Test 20: cleanupNonConsentedCookies function exists
+         */
+        function testCleanupFunction() {
+            try {
+                const hasFunction = typeof cleanupNonConsentedCookies === 'function';
+                recordTest(
+                    'cleanupNonConsentedCookies function exists',
+                    hasFunction,
+                    hasFunction ? 'Cleanup function available' : 'Cleanup function not found'
+                );
+            } catch (e) {
+                recordTest('cleanupNonConsentedCookies function exists', false, e.message);
+            }
+        }
+
+        /**
          * Run all tests
          */
         function runAllTests() {
@@ -492,6 +700,14 @@
             testCookieNotificationElement();
             testCookieNotificationVisibility();
             testCookieNotificationDismissal();
+            // Cookie Segregation Tests (DL-1)
+            testGetConsentLevel();
+            testCanSetCookie();
+            testSetCookieWithConsent();
+            testGetCookieWithConsent();
+            testCookieCategoryEnum();
+            testCookieConsentEndpointConfig();
+            testCleanupFunction();
 
             renderResults();
         }
