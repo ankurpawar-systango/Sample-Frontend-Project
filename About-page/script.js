@@ -11,6 +11,8 @@
  * - Granular cookie preference controls
  * - Authentication-only access
  * - Cookie segregation by consent level (DL-1)
+ * - Permission-level-based cookie segregation (DL-22)
+ * - Frontend validation of permission-level-based cookie access
  */
 
 // Configuration
@@ -62,14 +64,120 @@ function getConsentLevel() {
 }
 
 /**
+ * DL-22: Permission level definitions
+ * Maps permission levels to cookie access
+ * @readonly
+ */
+const PERMISSION_LEVEL_INFO = {
+    0: { level: 0, name: 'Public', description: 'No permission required' },
+    1: { level: 1, name: 'Basic User', description: 'Requires basic user authentication' },
+    2: { level: 2, name: 'Premium User', description: 'Requires premium user status' }
+};
+
+/**
+ * DL-22: Cookie category to permission level mapping
+ * @readonly
+ */
+const COOKIE_CATEGORY_LEVELS = {
+    'essential': 0,
+    'performance': 1,
+    'preferences': 2
+};
+
+/**
+ * DL-22: Get user's current permission level
+ * For now, defaults to basic user (level 1)
+ * In production, should fetch from user profile
+ * @returns {number} User's permission level
+ */
+function getUserPermissionLevel() {
+    // Check if stored in session storage
+    const stored = sessionStorage.getItem('userPermissionLevel');
+    if (stored) {
+        return parseInt(stored);
+    }
+
+    // Default to basic user level
+    return 1;
+}
+
+/**
+ * DL-22: Set user's permission level
+ * @param {number} level User's permission level
+ */
+function setUserPermissionLevel(level) {
+    sessionStorage.setItem('userPermissionLevel', level.toString());
+}
+
+/**
+ * DL-22: Check if user has permission level required for a cookie category
+ * @param {string} category - The cookie category
+ * @returns {boolean} True if user's permission level is sufficient
+ */
+function hasPermissionLevel(category) {
+    if (!COOKIE_CATEGORY_LEVELS.hasOwnProperty(category)) {
+        return false;
+    }
+
+    const requiredLevel = COOKIE_CATEGORY_LEVELS[category];
+    const userLevel = getUserPermissionLevel();
+
+    return userLevel >= requiredLevel;
+}
+
+/**
+ * DL-22: Validate cookie access by both permission level and consent
+ * @param {string} category - The cookie category
+ * @returns {Object} Validation result with allowed, reason, and action
+ */
+function validateCookieAccess(category) {
+    // Check permission level first
+    if (!hasPermissionLevel(category)) {
+        return {
+            allowed: false,
+            reason: 'insufficient_permission',
+            message: `Your permission level does not allow access to ${category} cookies`,
+            requiredLevel: COOKIE_CATEGORY_LEVELS[category],
+            userLevel: getUserPermissionLevel()
+        };
+    }
+
+    // Then check consent
+    const consent = getConsentLevel();
+    if (category === 'essential' || consent[category] === true) {
+        return {
+            allowed: true,
+            reason: 'approved',
+            message: `You have permission and consent for ${category} cookies`
+        };
+    }
+
+    return {
+        allowed: false,
+        reason: 'consent_not_given',
+        message: `Permission level sufficient but consent not given for ${category} cookies`,
+        requiredAction: 'update_consent'
+    };
+}
+
+/**
  * Check if a cookie of a specific category can be set based on user consent
+ * DL-22: Now also validates permission level
  * @param {string} category - The cookie category (essential, performance, preferences)
  * @returns {boolean} True if the cookie can be set, false otherwise
  */
 function canSetCookie(category) {
+    // DL-22: First validate permission level
+    const validation = validateCookieAccess(category);
+    if (!validation.allowed) {
+        console.warn(`DL-22: ${validation.message}`);
+        return false;
+    }
+
+    // Legacy consent check for backwards compatibility
     const consent = getConsentLevel();
 
-    // Essential cookies are always allowed
+    // Essential cookies are always allowed if permission meets requirement
     if (category === COOKIE_CATEGORY.ESSENTIAL) {
         return true;
     }

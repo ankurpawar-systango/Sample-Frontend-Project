@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Permissions - Manage by Permission Level</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Permissions page specific styles */
+        .permissions-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .permissions-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .permissions-header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .permissions-header p {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .permission-levels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .permission-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .permission-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .permission-card.level-0 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .permission-card.level-1 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .permission-card.level-2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .permission-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .permission-card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .permission-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .permission-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .permission-card p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .permission-description {
+            font-size: 0.95em;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .cookie-categories {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .category-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .category-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.95em;
+        }
+
+        .category-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .current-level-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .cookie-segregation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 40px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .cookie-segregation-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .cookie-segregation-table th,
+        .cookie-segregation-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cookie-segregation-table tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        .cookie-segregation-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .level-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .level-0 .level-indicator {
+            background: #667eea;
+        }
+
+        .level-1 .level-indicator {
+            background: #f5576c;
+        }
+
+        .level-2 .level-indicator {
+            background: #00f2fe;
+        }
+
+        .access-control-section {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .access-control-section h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .access-control-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .access-control-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .access-control-item .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .access-control-item .status.allowed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .access-control-item .status.denied {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <span class="nav-brand">Cookie Permissions</span>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">About</a>
+                <a href="permissions.html" class="nav-link">Permissions</a>
+                <a href="/privacy" class="nav-link">Privacy</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="permissions-container">
+        <a href="index.html" class="back-link">← Back to About Page</a>
+
+        <div class="permissions-header">
+            <h1>🔐 Cookie Permissions & Consent</h1>
+            <p>Manage your cookie preferences based on your permission level</p>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loadingState" style="text-align: center; padding: 40px;">
+            <span class="loading-spinner"></span>
+            <p>Loading permission levels...</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" style="display: none;">
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <!-- Content state -->
+        <div id="contentState" style="display: none;">
+            <!-- Current Permission Level -->
+            <div class="access-control-section">
+                <h3>Your Current Status</h3>
+                <div id="currentLevelInfo">
+                    <p>Permission Level: <strong id="currentLevelValue">Loading...</strong></p>
+                    <p id="currentLevelDescription"></p>
+                </div>
+            </div>
+
+            <!-- Permission Levels -->
+            <div class="permission-levels" id="permissionLevelsContainer">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Cookie Categories by Permission Level -->
+            <h2>Cookie Categories by Permission Level</h2>
+            <table class="cookie-segregation-table">
+                <thead>
+                    <tr>
+                        <th>Cookie Category</th>
+                        <th>Required Permission Level</th>
+                        <th>Your Access</th>
+                        <th>Consent Status</th>
+                        <th>Overall Access</th>
+                    </tr>
+                </thead>
+                <tbody id="cookieTableBody">
+                    <!-- Dynamically populated -->
+                </tbody>
+            </table>
+
+            <!-- Cookie Preferences by Category -->
+            <h2>Manage Your Consent by Category</h2>
+            <div class="access-control-section">
+                <div id="categoryConsents">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Permission Information -->
+            <h2>Understanding Permission Levels</h2>
+            <div class="access-control-section">
+                <p>Your ability to manage different types of cookies is determined by your permission level. Here's what each level grants access to:</p>
+                <div id="permissionExplanation">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-primary" id="refreshBtn" onclick="loadPermissionLevels()">Refresh Information</button>
+                <button class="btn-secondary" id="backBtn" onclick="window.location.href='index.html'">Back to About</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="permissions.js"></script>
+</body>
+
+</html>
