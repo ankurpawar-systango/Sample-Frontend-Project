@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Integration Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FastAPI Integration Demo</h1>
+            <p class="subtitle">Full-Stack Application Template with FastAPI Backend</p>
+        </header>
+
+        <!-- API Configuration -->
+        <section class="config-section">
+            <h2>API Configuration</h2>
+            <div class="config-form">
+                <label for="apiUrl">Backend API URL:</label>
+                <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+                <button onclick="testConnection()" class="btn btn-secondary">Test Connection</button>
+                <div id="connectionStatus" class="status-message"></div>
+            </div>
+        </section>
+
+        <!-- GET Endpoints Demo -->
+        <section class="demo-section">
+            <h2>GET Requests Demo</h2>
+
+            <div class="endpoint-demo">
+                <h3>Get All Items</h3>
+                <p class="endpoint-info">Endpoint: <code>GET /items</code></p>
+                <button onclick="getAllItems()" class="btn btn-primary">Fetch All Items</button>
+                <div id="itemsResult" class="result-box"></div>
+            </div>
+
+            <div class="endpoint-demo">
+                <h3>Get Item by ID</h3>
+                <p class="endpoint-info">Endpoint: <code>GET /items/{item_id}</code></p>
+                <input type="number" id="itemId" placeholder="Enter item ID (e.g., 1)" min="1">
+                <button onclick="getItemById()" class="btn btn-primary">Fetch Item</button>
+                <div id="itemByIdResult" class="result-box"></div>
+            </div>
+
+            <div class="endpoint-demo">
+                <h3>Health Check</h3>
+                <p class="endpoint-info">Endpoint: <code>GET /health</code></p>
+                <button onclick="checkHealth()" class="btn btn-primary">Check Health</button>
+                <div id="healthResult" class="result-box"></div>
+            </div>
+        </section>
+
+        <!-- POST Endpoints Demo -->
+        <section class="demo-section">
+            <h2>POST Requests Demo</h2>
+
+            <div class="endpoint-demo">
+                <h3>Create New Item</h3>
+                <p class="endpoint-info">Endpoint: <code>POST /items</code></p>
+                <form id="createItemForm" onsubmit="createItem(event)">
+                    <input type="text" id="itemName" placeholder="Item name" required>
+                    <input type="text" id="itemDescription" placeholder="Description (optional)">
+                    <input type="number" id="itemPrice" placeholder="Price" step="0.01" min="0" required>
+                    <button type="submit" class="btn btn-success">Create Item</button>
+                </form>
+                <div id="createItemResult" class="result-box"></div>
+            </div>
+
+            <div class="endpoint-demo">
+                <h3>Send Greeting</h3>
+                <p class="endpoint-info">Endpoint: <code>POST /greet</code></p>
+                <form id="greetForm" onsubmit="sendGreeting(event)">
+                    <input type="text" id="greetName" placeholder="Your name (optional)">
+                    <input type="text" id="greetMessage" placeholder="Your message" required>
+                    <button type="submit" class="btn btn-success">Send Greeting</button>
+                </form>
+                <div id="greetResult" class="result-box"></div>
+            </div>
+        </section>
+
+        <!-- API Response History -->
+        <section class="demo-section">
+            <h2>API Response Log</h2>
+            <button onclick="clearLog()" class="btn btn-secondary">Clear Log</button>
+            <div id="responseLog" class="log-container"></div>
+        </section>
+
+        <footer>
+            <p>This demo demonstrates API integration between HTML/JavaScript frontend and FastAPI backend.</p>
+            <p>Make sure the FastAPI backend is running on <strong id="backendUrl">http://localhost:8000</strong></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
