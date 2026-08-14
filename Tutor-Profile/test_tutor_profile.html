@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Profile Page - Unit Tests</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .test-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+
+        .test-panel h3 {
+            margin-top: 0;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .test-item {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-pass {
+            color: #27ae60;
+        }
+
+        .test-fail {
+            color: #e74c3c;
+        }
+
+        .test-summary {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+            font-weight: bold;
+        }
+
+        button.test-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.test-btn:hover {
+            background-color: #764ba2;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <span class="nav-brand">📚 Tutor Profiles</span>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/about" class="nav-link">About</a>
+                <a href="/contact" class="nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1 class="page-title">Our Tutors</h1>
+            <p class="page-subtitle">Meet our expert educators</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading tutor profiles...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <p id="errorText">Failed to load tutor profiles</p>
+        </div>
+
+        <!-- Tutors Grid -->
+        <div id="tutorsContainer" class="tutors-grid" style="display: none;">
+            <!-- Tutor cards will be inserted here dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <p>No tutors found</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Tutor Platform. All rights reserved.</p>
+    </footer>
+
+    <!-- Test Panel -->
+    <div class="test-panel">
+        <h3>🧪 Unit Tests</h3>
+        <div id="testResults"></div>
+        <button class="test-btn" onclick="runTests()">Run Tests</button>
+    </div>
+
+    <script>
+        /**
+         * Unit Test Suite for Tutor Profile Page
+         */
+
+        class TutorProfileTest {
+            constructor() {
+                this.testsPassed = 0;
+                this.testsFailed = 0;
+                this.tests = [];
+            }
+
+            /**
+             * Run all tests
+             */
+            runAll() {
+                console.log('=== Tutor Profile Unit Tests ===\n');
+
+                this.testDOMElements();
+                this.testPageStructure();
+                this.testStylesLoaded();
+                this.testConfiguration();
+                this.testFetchFunction();
+                this.testCardCreation();
+                this.testErrorHandling();
+
+                this.printResults();
+            }
+
+            /**
+             * Test that all required DOM elements exist
+             */
+            testDOMElements() {
+                const testName = "DOM elements exist";
+                try {
+                    const elements = {
+                        'tutorsContainer': document.getElementById('tutorsContainer'),
+                        'loadingSpinner': document.getElementById('loadingSpinner'),
+                        'errorMessage': document.getElementById('errorMessage'),
+                        'emptyState': document.getElementById('emptyState')
+                    };
+
+                    const allExist = Object.values(elements).every(el => el !== null);
+                    this.assertTrue(allExist, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test page structure
+             */
+            testPageStructure() {
+                const testName = "Page structure is complete";
+                try {
+                    const navbar = document.querySelector('.navbar');
+                    const header = document.querySelector('.header-section');
+                    const footer = document.querySelector('.footer');
+
+                    const hasStructure = navbar && header && footer;
+                    this.assertTrue(hasStructure, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test that styles are loaded
+             */
+            testStylesLoaded() {
+                const testName = "CSS styles are loaded";
+                try {
+                    const container = document.getElementById('tutorsContainer');
+                    const styles = window.getComputedStyle(container);
+                    const hasStyles = styles && styles.display !== undefined;
+                    this.assertTrue(hasStyles, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test configuration object
+             */
+            testConfiguration() {
+                const testName = "CONFIG object is defined";
+                try {
+                    const hasConfig = typeof CONFIG !== 'undefined' && CONFIG.TUTOR_API_ENDPOINT;
+                    this.assertTrue(hasConfig, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test fetch function
+             */
+            testFetchFunction() {
+                const testName = "fetchTutors function exists";
+                try {
+                    const hasFunction = typeof fetchTutors === 'function';
+                    this.assertTrue(hasFunction, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test tutor card creation
+             */
+            testCardCreation() {
+                const testName = "createTutorCard function exists";
+                try {
+                    const hasFunction = typeof createTutorCard === 'function';
+                    this.assertTrue(hasFunction, testName);
+
+                    // Test creating a sample card
+                    const testName2 = "Can create tutor card with test data";
+                    const mockTutor = {
+                        id: 1,
+                        name: 'Test Tutor',
+                        email: 'test@example.com',
+                        bio: 'Test bio',
+                        about: 'Test about',
+                        is_first_tutor: true
+                    };
+
+                    const card = createTutorCard(mockTutor);
+                    const isValid = card && card.classList.contains('tutor-card');
+                    this.assertTrue(isValid, testName2);
+                } catch (e) {
+                    this.assertFalse("Card creation - " + e.message);
+                }
+            }
+
+            /**
+             * Test error handling
+             */
+            testErrorHandling() {
+                const testName = "Error handling functions exist";
+                try {
+                    const funcs = [
+                        typeof showErrorState === 'function',
+                        typeof showLoadingState === 'function',
+                        typeof showEmptyState === 'function',
+                        typeof hideLoadingState === 'function'
+                    ];
+                    this.assertTrue(funcs.every(f => f), testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Assert true
+             */
+            assertTrue(condition, testName) {
+                if (condition) {
+                    this.testsPassed++;
+                    this.tests.push(`✓ ${testName}`);
+                } else {
+                    this.testsFailed++;
+                    this.tests.push(`✗ ${testName}`);
+                }
+            }
+
+            /**
+             * Assert false
+             */
+            assertFalse(message) {
+                this.testsFailed++;
+                this.tests.push(`✗ ${message}`);
+            }
+
+            /**
+             * Print results
+             */
+            printResults() {
+                const resultsDiv = document.getElementById('testResults');
+                resultsDiv.innerHTML = '';
+
+                this.tests.forEach(test => {
+                    const item = document.createElement('div');
+                    item.className = 'test-item ' + (test.startsWith('✓') ? 'test-pass' : 'test-fail');
+                    item.textContent = test;
+                    resultsDiv.appendChild(item);
+                });
+
+                const summary = document.createElement('div');
+                summary.className = 'test-summary';
+                summary.innerHTML = `
+                    ✓ Passed: ${this.testsPassed}<br>
+                    ✗ Failed: ${this.testsFailed}<br>
+                    Total: ${this.testsPassed + this.testsFailed}
+                `;
+                resultsDiv.appendChild(summary);
+
+                console.log('\n--- Test Summary ---');
+                console.log(`Tests Passed: ${this.testsPassed}`);
+                console.log(`Tests Failed: ${this.testsFailed}`);
+                console.log(`Total Tests: ${this.testsPassed + this.testsFailed}`);
+            }
+        }
+
+        // Global test instance
+        let tester = new TutorProfileTest();
+
+        // Run tests on page load
+        function runTests() {
+            tester = new TutorProfileTest();
+            tester.runAll();
+        }
+
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            // Small delay to ensure all functions are loaded
+            setTimeout(runTests, 100);
+        });
+    </script>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
