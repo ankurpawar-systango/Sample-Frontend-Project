@@ -154,6 +154,8 @@
                 this.testConfiguration();
                 this.testFetchFunction();
                 this.testCardCreation();
+                this.testMultipleTutors();
+                this.testAvinashCardDisplay();
                 this.testErrorHandling();
 
                 this.printResults();
@@ -262,6 +264,79 @@
                     this.assertTrue(isValid, testName2);
                 } catch (e) {
                     this.assertFalse("Card creation - " + e.message);
+                }
+            }
+
+            /**
+             * Test multiple tutors display
+             */
+            testMultipleTutors() {
+                const testName = "Page handles multiple tutors correctly";
+                try {
+                    const tutors = [
+                        {
+                            id: 1,
+                            name: 'Ankur Pawar',
+                            email: 'ankur.pawar@systango.com',
+                            bio: 'Experienced tutor',
+                            about: 'Dedicated educator',
+                            is_first_tutor: true
+                        },
+                        {
+                            id: 2,
+                            name: 'Avinash',
+                            email: 'avinash@systango.com',
+                            bio: 'Expert in web development',
+                            about: 'Passionate developer',
+                            is_first_tutor: false
+                        }
+                    ];
+
+                    const container = document.getElementById('tutorsContainer');
+                    const initialHTML = container.innerHTML;
+                    container.innerHTML = '';
+
+                    tutors.forEach(tutor => {
+                        const card = createTutorCard(tutor);
+                        container.appendChild(card);
+                    });
+
+                    const cardsCreated = container.querySelectorAll('.tutor-card').length === 2;
+                    this.assertTrue(cardsCreated, testName);
+
+                    container.innerHTML = initialHTML;
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
+                }
+            }
+
+            /**
+             * Test Avinash card display
+             */
+            testAvinashCardDisplay() {
+                const testName = "Avinash tutor card displays correctly";
+                try {
+                    const avinash = {
+                        id: 2,
+                        name: 'Avinash',
+                        email: 'avinash@systango.com',
+                        bio: 'Expert in web development and programming',
+                        about: 'A passionate developer and educator with 8+ years of experience',
+                        is_first_tutor: false
+                    };
+
+                    const card = createTutorCard(avinash);
+
+                    const hasName = card.textContent.includes('Avinash');
+                    const hasEmail = card.textContent.includes('avinash@systango.com');
+                    const hasBio = card.textContent.includes('web development');
+                    const hasAbout = card.textContent.includes('developer');
+                    const noBadge = !card.querySelector('.first-tutor-badge');
+
+                    const isValid = hasName && hasEmail && hasBio && hasAbout && noBadge;
+                    this.assertTrue(isValid, testName);
+                } catch (e) {
+                    this.assertFalse(testName + " - " + e.message);
                 }
             }
 
