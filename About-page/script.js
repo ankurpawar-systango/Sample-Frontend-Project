@@ -306,6 +306,7 @@ async function syncCurrentPreferencesToBackend() {
 function setupEventListeners() {
     const updateBtn = document.getElementById('updateCookiePrefs');
     const saveBtn = document.getElementById('saveCookiePrefs');
+    const cancelBtn = document.getElementById('cancelCookiePrefs');
     const manageCookiesBtn = document.getElementById('manageCookies');
     const logoutBtn = document.getElementById('logoutBtn');
     const viewCookieSettingsBtn = document.getElementById('viewCookieSettings');
@@ -317,6 +318,10 @@ function setupEventListeners() {
 
     if (saveBtn) {
         saveBtn.addEventListener('click', saveCookiePreferences);
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', toggleCookiePreferences);
     }
 
     if (manageCookiesBtn) {
