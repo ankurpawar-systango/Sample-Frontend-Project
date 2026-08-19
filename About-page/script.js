@@ -11,6 +11,7 @@
  * - Granular cookie preference controls
  * - Authentication-only access
  * - Cookie segregation by consent level (DL-1)
+ * - Enhanced wildcard cookie cleanup (DL-27)
  */
 
 // Configuration
@@ -417,15 +418,14 @@ async function saveCookiePreferences() {
  * Clean up cookies that user has revoked consent for
  * Immediately deletes cookies when user revokes consent for a category
  *
- * DL-5: Enhanced cleanup with comprehensive cookie enumeration
+ * DL-27: Enhanced cleanup with wildcard pattern support for cookies like ga_*
  * @param {Object} prefs - Current cookie preferences
  */
 function cleanupNonConsentedCookies(prefs) {
     // List of known non-essential cookies to clean up
     const performanceCookies = [
         '_ga', '_gid', '_analytics',
-        '_gat', '_gat_gtag_*', 'ga_*',
-        '__utma', '__utmb', '__utmc', '__utmz', '__utmv',
+        '_gat', '__utma', '__utmb', '__utmc', '__utmz', '__utmv',
         'analytics', 'analytics_session'
     ];
     const preferenceCookies = [
@@ -434,39 +434,60 @@ function cleanupNonConsentedCookies(prefs) {
         'ui_preferences', 'display_preferences'
     ];
 
+    // Get all existing cookies for wildcard matching
+    const allCookies = document.cookie.split(';');
+    const existingCookieNames = allCookies.map(cookie => cookie.split('=')[0].trim()).filter(name => name);
+
     // Clean up performance cookies if user revoked consent
     if (!prefs.performance) {
+        // Delete known performance cookies
         performanceCookies.forEach(name => {
             deleteCookie(name);
             deleteCookie(name, '/');
         });
-        console.log('DL-5: Cleaned up performance tracking cookies');
+
+        // DL-27: Delete wildcard pattern cookies (e.g., ga_*, _gat_gtag_*)
+        existingCookieNames.forEach(cookieName => {
+            // Match ga_* pattern (Google Analytics session cookies)
+            if (cookieName.startsWith('ga_') || cookieName.startsWith('_ga_')) {
+                deleteCookie(cookieName);
+                deleteCookie(cookieName, '/');
+                console.log(`DL-27: Deleted wildcard performance cookie: ${cookieName}`);
+            }
+            // Match _gat_gtag_* pattern (Google Analytics tracking cookies)
+            if (cookieName.startsWith('_gat_gtag_')) {
+                deleteCookie(cookieName);
+                deleteCookie(cookieName, '/');
+                console.log(`DL-27: Deleted wildcard performance cookie: ${cookieName}`);
+            }
+            // Check if this is a performance cookie by name pattern
+            if (isPerformanceCookie(cookieName)) {
+                deleteCookie(cookieName);
+                deleteCookie(cookieName, '/');
+            }
+        });
+
+        console.log('DL-27: Cleaned up performance tracking cookies including wildcard patterns');
     }
 
     // Clean up preference cookies if user revoked consent
     if (!prefs.preferences) {
+        // Delete known preference cookies
         preferenceCookies.forEach(name => {
             deleteCookie(name);
             deleteCookie(name, '/');
         });
-        console.log('DL-5: Cleaned up preference cookies');
+
+        // Check all cookies for preference patterns
+        existingCookieNames.forEach(cookieName => {
+            if (isPreferenceCookie(cookieName)) {
+                deleteCookie(cookieName);
+                deleteCookie(cookieName, '/');
+            }
+        });
+
+        console.log('DL-27: Cleaned up preference cookies');
     }
-
-    // Also scan for any cookies with tracking-related names
-    const allCookies = document.cookie.split(';');
-    allCookies.forEach(cookie => {
-        const cookieName = cookie.split('=')[0].trim();
-
-        // Check if this is a performance cookie and user didn't consent
-        if (!prefs.performance && isPerformanceCookie(cookieName)) {
-            deleteCookie(cookieName);
-        }
-
-        // Check if this is a preference cookie and user didn't consent
-        if (!prefs.preferences && isPreferenceCookie(cookieName)) {
-            deleteCookie(cookieName);
-        }
-    });
 }
 
 /**
