@@ -81,32 +81,73 @@
                     <p><strong>What are cookies?</strong></p>
                     <p>Cookies are small text files stored on your device that help us remember your preferences and improve your experience on our website.</p>
 
-                    <p><strong>Types of cookies we use:</strong></p>
-                    <ul class="cookie-types">
-                        <li><strong>Essential Cookies:</strong> Required for basic functionality and security</li>
-                        <li><strong>Performance Cookies:</strong> Help us understand how you use our site</li>
-                        <li><strong>Preference Cookies:</strong> Remember your choices and settings</li>
-                    </ul>
-
                     <p><strong>Your Privacy Rights:</strong></p>
                     <p>You have the right to control cookie settings. <a href="/privacy" class="policy-link">View our Privacy Policy</a> for more information about how we handle your data.</p>
 
                     <div class="cookie-controls">
                         <button id="updateCookiePrefs" class="btn-secondary">Update Preferences</button>
                         <div id="cookiePreferences" class="cookie-preferences" style="display: none;">
-                            <label class="cookie-checkbox">
-                                <input type="checkbox" id="essentialCookies" checked disabled>
-                                <span>Essential Cookies (required)</span>
-                            </label>
-                            <label class="cookie-checkbox">
-                                <input type="checkbox" id="performanceCookies">
-                                <span>Performance Cookies</span>
-                            </label>
-                            <label class="cookie-checkbox">
-                                <input type="checkbox" id="preferenceCookies">
-                                <span>Preference Cookies</span>
-                            </label>
-                            <button id="saveCookiePrefs" class="btn-primary">Save Preferences</button>
+                            <!-- Necessary Cookies Section -->
+                            <div class="cookie-category-section">
+                                <div class="category-header necessary">
+                                    <h4>Required Cookies</h4>
+                                    <span class="category-badge">Always Enabled</span>
+                                </div>
+                                <p class="category-description">These cookies are essential for the website to function properly and cannot be disabled.</p>
+                                <div class="cookie-examples">
+                                    <p><strong>Examples:</strong> PHPSESSID, csrftoken, sessionid</p>
+                                </div>
+                                <label class="cookie-checkbox necessary">
+                                    <input type="checkbox" id="essentialCookies" checked disabled>
+                                    <span>Essential Cookies (required)</span>
+                                </label>
+                            </div>
+
+                            <!-- Non-Necessary Cookies Section -->
+                            <div class="cookie-category-section">
+                                <div class="category-header optional">
+                                    <h4>Optional Cookies</h4>
+                                    <span class="category-badge optional">You Control These</span>
+                                </div>
+                                <p class="category-description">These cookies help us understand how you use our website and enhance your experience. You can choose to enable or disable them.</p>
+
+                                <!-- Performance Cookies -->
+                                <div class="cookie-subsection">
+                                    <div class="subsection-title">
+                                        <span class="subsection-icon">📊</span>
+                                        <span>Performance Cookies</span>
+                                    </div>
+                                    <p class="subsection-description">Track website usage patterns and analytics to help us improve your experience.</p>
+                                    <div class="cookie-examples">
+                                        <p><strong>Examples:</strong> _ga, _gid, analytics, tracking cookies</p>
+                                    </div>
+                                    <label class="cookie-checkbox">
+                                        <input type="checkbox" id="performanceCookies">
+                                        <span>Enable Performance Cookies</span>
+                                    </label>
+                                </div>
+
+                                <!-- Preference Cookies -->
+                                <div class="cookie-subsection">
+                                    <div class="subsection-title">
+                                        <span class="subsection-icon">⚙️</span>
+                                        <span>Preference Cookies</span>
+                                    </div>
+                                    <p class="subsection-description">Remember your choices, such as theme preference and language settings.</p>
+                                    <div class="cookie-examples">
+                                        <p><strong>Examples:</strong> _theme, _language, user_preferences</p>
+                                    </div>
+                                    <label class="cookie-checkbox">
+                                        <input type="checkbox" id="preferenceCookies">
+                                        <span>Enable Preference Cookies</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="cookie-actions-section">
+                                <button id="saveCookiePrefs" class="btn-primary">Save Preferences</button>
+                                <button id="cancelCookiePrefs" class="btn-secondary">Cancel</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -118,13 +159,17 @@
     <div id="cookieBanner" class="cookie-banner">
         <div class="cookie-content">
             <div class="cookie-text">
-                <h3>🍪 Cookie Consent</h3>
-                <p>We use cookies to improve your experience on our website. By using our site, you consent to our use of cookies. <a href="/privacy" class="cookie-link">Learn more</a></p>
+                <h3>🍪 We Use Cookies</h3>
+                <div class="banner-cookie-info">
+                    <p><strong>Required cookies</strong> are always enabled to ensure basic functionality.</p>
+                    <p><strong>Optional cookies</strong> (performance and preferences) require your consent.</p>
+                    <p><a href="/privacy" class="cookie-link">Learn more about our cookies</a></p>
+                </div>
             </div>
             <div class="cookie-actions">
-                <button id="acceptCookies" class="btn-accept">Accept</button>
-                <button id="declineCookies" class="btn-decline">Decline</button>
-                <button id="manageCookies" class="btn-manage">Manage Preferences</button>
+                <button id="acceptCookies" class="btn-accept">Accept All</button>
+                <button id="declineCookies" class="btn-decline">Decline Optional</button>
+                <button id="manageCookies" class="btn-manage">Manage</button>
             </div>
         </div>
     </div>

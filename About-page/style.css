@@ -423,30 +423,155 @@ body {
 
 .cookie-preferences {
     margin-top: 20px;
-    padding: 20px;
+    padding: 25px;
     background: white;
     border-radius: 8px;
     border: 1px solid #e8eaed;
 }
 
+/* Cookie Category Sections */
+.cookie-category-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+}
+
+.cookie-category-section:first-child {
+    background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
+    border: 1px solid #ddd6fe;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.category-header.necessary {
+    border-bottom-color: #667eea;
+}
+
+.category-header.optional {
+    border-bottom-color: #f59e0b;
+}
+
+.category-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.category-badge.optional {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.category-description {
+    font-size: 0.95rem;
+    color: #4b5563;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.cookie-examples {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 12px 0 15px 0;
+    border-left: 3px solid #667eea;
+}
+
+.cookie-examples p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* Cookie Subsections for non-necessary cookies */
+.cookie-subsection {
+    margin: 20px 0 0 0;
+    padding: 16px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.cookie-subsection:not(:first-child) {
+    margin-top: 15px;
+}
+
+.subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.95rem;
+}
+
+.subsection-icon {
+    font-size: 1.1rem;
+}
+
+.subsection-description {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
 .cookie-checkbox {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin: 12px 0;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    color: #374151;
 }
 
 .cookie-checkbox input {
-    margin-right: 12px;
+    margin-right: 10px;
     cursor: pointer;
     width: 18px;
     height: 18px;
+    accent-color: #667eea;
 }
 
 .cookie-checkbox input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.cookie-checkbox.necessary input {
+    accent-color: #667eea;
+}
+
+/* Cookie Actions Section */
+.cookie-actions-section {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
 }
 
 /* Cookie Banner Styles (for first-time visitors) */
@@ -484,13 +609,23 @@ body {
 
 .cookie-text h3 {
     font-size: 1.1rem;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .cookie-text p {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #ccc;
-    margin: 0;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+}
+
+.banner-cookie-info {
+    font-size: 0.9rem;
+}
+
+.banner-cookie-info p {
+    margin: 6px 0;
 }
 
 .cookie-link {
