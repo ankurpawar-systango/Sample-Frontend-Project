@@ -291,7 +291,8 @@ const PrivacyPolicyTests = (() => {
 
         const final = JSON.parse(mockLocalStorage.getItem('privacyPolicyConsent'));
         assertEqual(final.iteration, 4, 'Final consent update is the last one (iteration 4)');
-        assertEqual(final.accepted, false, 'Final consent reflects last update (accepted = false)');
+        // At iteration 4, i % 2 === 0 is true (4 % 2 = 0), so accepted should be true
+        assertEqual(final.accepted, true, 'Final consent reflects last update (accepted = true for iteration 4)');
     }
 
     /**
