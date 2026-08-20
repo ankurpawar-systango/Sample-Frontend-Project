@@ -854,4 +854,212 @@ body {
     .cookie-preferences {
         padding: 15px;
     }
+
+    .cookie-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .cookie-table th,
+    .cookie-table td {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+
+    .category-header-block {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+/* DL-36: Cookie Details Section Styles */
+.cookie-details-section {
+    margin: 30px 0;
+    padding: 25px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.cookie-details-section h4 {
+    font-size: 1.3rem;
+    color: #1f2937;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.section-description {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+/* Cookie Category Block */
+.cookie-category-block {
+    margin: 25px 0;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #667eea;
+}
+
+.cookie-category-block:first-of-type {
+    border-left-color: #667eea;
+}
+
+.cookie-category-block:nth-of-type(2) {
+    border-left-color: #f59e0b;
+}
+
+.cookie-category-block:nth-of-type(3) {
+    border-left-color: #10b981;
+}
+
+.category-header-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.category-header-block.essential {
+    border-bottom-color: #667eea;
+}
+
+.category-header-block.performance {
+    border-bottom-color: #f59e0b;
+}
+
+.category-header-block.preferences {
+    border-bottom-color: #10b981;
+}
+
+.category-header-block h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1f2937;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-badge-block {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-badge-block.required {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.category-badge-block.optional {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.category-intro {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+/* Cookie Table Styles */
+.cookie-table-wrapper {
+    overflow-x: auto;
+    margin-top: 15px;
+}
+
+.cookie-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.cookie-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.cookie-table th {
+    text-align: left;
+    padding: 12px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #667eea;
+}
+
+.cookie-table td {
+    padding: 12px;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cookie-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.cookie-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Cookie name styling */
+.cookie-table td:first-child {
+    font-weight: 600;
+    color: #1f2937;
+    font-family: 'Courier New', monospace;
+}
+
+/* Purpose column styling */
+.cookie-table td:nth-child(2) {
+    line-height: 1.5;
+}
+
+/* Expiration column styling */
+.cookie-table td:last-child {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Empty state for tables */
+.cookie-table tbody tr.empty-state td {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Visual indicators for cookie status */
+.cookie-status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.cookie-status-indicator.required {
+    background: #667eea;
+}
+
+.cookie-status-indicator.optional {
+    background: #f59e0b;
+}
+
+.cookie-status-indicator.active {
+    background: #10b981;
+}
+
+.cookie-status-indicator.inactive {
+    background: #ef4444;
 }

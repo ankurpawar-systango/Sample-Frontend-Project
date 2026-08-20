@@ -37,6 +37,130 @@ const COOKIE_CATEGORY = {
 };
 
 /**
+ * DL-36: Detailed Cookie Inventory
+ * Complete list of all cookies used on the platform with metadata
+ * @readonly
+ */
+const COOKIE_INVENTORY = {
+    essential: [
+        {
+            name: 'PHPSESSID',
+            purpose: 'Maintains your session state across page requests. Essential for authentication and user identification.',
+            expiration: 'Session (deleted when browser closes)'
+        },
+        {
+            name: 'csrftoken',
+            purpose: 'Protects against Cross-Site Request Forgery (CSRF) attacks by validating form submissions.',
+            expiration: '1 year'
+        },
+        {
+            name: 'sessionid',
+            purpose: 'Identifies your unique session on the server. Required for login functionality.',
+            expiration: '2 weeks'
+        },
+        {
+            name: 'auth_token',
+            purpose: 'Stores your authentication token for secure API requests.',
+            expiration: '30 days'
+        },
+        {
+            name: 'user_id',
+            purpose: 'Stores your user identifier for session management.',
+            expiration: 'Session'
+        }
+    ],
+    performance: [
+        {
+            name: '_ga',
+            purpose: 'Google Analytics cookie used to distinguish unique users and track website usage patterns.',
+            expiration: '2 years'
+        },
+        {
+            name: '_gid',
+            purpose: 'Google Analytics cookie used to distinguish users for 24-hour tracking.',
+            expiration: '24 hours'
+        },
+        {
+            name: '_gat',
+            purpose: 'Google Analytics cookie used to throttle request rate.',
+            expiration: '1 minute'
+        },
+        {
+            name: 'ga_*',
+            purpose: 'Google Analytics session cookies (wildcard pattern) for tracking user sessions.',
+            expiration: '2 years'
+        },
+        {
+            name: '_gat_gtag_*',
+            purpose: 'Google Analytics tracking cookies (wildcard pattern) for Google Tag Manager.',
+            expiration: '1 minute'
+        },
+        {
+            name: 'analytics_session',
+            purpose: 'Custom analytics session identifier for internal tracking.',
+            expiration: '1 hour'
+        },
+        {
+            name: '__utma',
+            purpose: 'Legacy Google Analytics cookie for tracking visitors and sessions.',
+            expiration: '2 years'
+        },
+        {
+            name: '__utmb',
+            purpose: 'Legacy Google Analytics cookie for tracking new sessions.',
+            expiration: '30 minutes'
+        },
+        {
+            name: '__utmc',
+            purpose: 'Legacy Google Analytics cookie for determining new sessions.',
+            expiration: 'Session'
+        },
+        {
+            name: '__utmz',
+            purpose: 'Legacy Google Analytics cookie for tracking traffic sources.',
+            expiration: '6 months'
+        }
+    ],
+    preferences: [
+        {
+            name: '_theme',
+            purpose: 'Remembers your theme preference (light/dark mode) across sessions.',
+            expiration: '1 year'
+        },
+        {
+            name: '_language',
+            purpose: 'Stores your preferred language setting for the interface.',
+            expiration: '1 year'
+        },
+        {
+            name: 'user_preferences',
+            purpose: 'Stores various user interface preferences and customization settings.',
+            expiration: '6 months'
+        },
+        {
+            name: 'theme_preference',
+            purpose: 'Remembers your color scheme and visual theme choices.',
+            expiration: '1 year'
+        },
+        {
+            name: 'language_setting',
+            purpose: 'Stores your selected language for content display.',
+            expiration: '1 year'
+        },
+        {
+            name: 'ui_preferences',
+            purpose: 'Saves your user interface layout and display preferences.',
+            expiration: '6 months'
+        },
+        {
+            name: 'display_preferences',
+            purpose: 'Remembers your display settings like font size, layout density, etc.',
+            expiration: '6 months'
+        }
+    ]
+};
+
+/**
  * Get the current consent level from localStorage
  * @returns {Object} The user's consent preferences
  */
@@ -266,13 +390,98 @@ async function syncPreferencesWithBackend(prefs) {
 }
 
 /**
+ * DL-36: Render detailed cookie tables
+ * Populates the cookie tables with data from COOKIE_INVENTORY
+ */
+function renderCookieTables() {
+    // Render Essential Cookies
+    const essentialTable = document.getElementById('essentialCookiesTable');
+    if (essentialTable) {
+        const tbody = essentialTable.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        if (COOKIE_INVENTORY.essential.length === 0) {
+            tbody.innerHTML = '<tr class="empty-state"><td colspan="3">No essential cookies found</td></tr>';
+        } else {
+            COOKIE_INVENTORY.essential.forEach(cookie => {
+                const row = createCookieRow(cookie, 'required');
+                tbody.appendChild(row);
+            });
+        }
+    }
+
+    // Render Performance Cookies
+    const performanceTable = document.getElementById('performanceCookiesTable');
+    if (performanceTable) {
+        const tbody = performanceTable.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        if (COOKIE_INVENTORY.performance.length === 0) {
+            tbody.innerHTML = '<tr class="empty-state"><td colspan="3">No performance cookies found</td></tr>';
+        } else {
+            COOKIE_INVENTORY.performance.forEach(cookie => {
+                const row = createCookieRow(cookie, 'optional');
+                tbody.appendChild(row);
+            });
+        }
+    }
+
+    // Render Preference Cookies
+    const preferencesTable = document.getElementById('preferencesCookiesTable');
+    if (preferencesTable) {
+        const tbody = preferencesTable.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        if (COOKIE_INVENTORY.preferences.length === 0) {
+            tbody.innerHTML = '<tr class="empty-state"><td colspan="3">No preference cookies found</td></tr>';
+        } else {
+            COOKIE_INVENTORY.preferences.forEach(cookie => {
+                const row = createCookieRow(cookie, 'optional');
+                tbody.appendChild(row);
+            });
+        }
+    }
+
+    console.log('DL-36: Cookie tables rendered successfully');
+}
+
+/**
+ * DL-36: Create a table row for a cookie
+ * @param {Object} cookie - Cookie data object
+ * @param {string} type - Cookie type ('required' or 'optional')
+ * @returns {HTMLElement} Table row element
+ */
+function createCookieRow(cookie, type) {
+    const row = document.createElement('tr');
+
+    // Cookie name cell
+    const nameCell = document.createElement('td');
+    nameCell.textContent = cookie.name;
+    row.appendChild(nameCell);
+
+    // Purpose cell
+    const purposeCell = document.createElement('td');
+    purposeCell.textContent = cookie.purpose;
+    row.appendChild(purposeCell);
+
+    // Expiration cell
+    const expirationCell = document.createElement('td');
+    expirationCell.textContent = cookie.expiration;
+    row.appendChild(expirationCell);
+
+    return row;
+}
+
+/**
  * Initialize the About page on load
  *
  * DL-5: Enhanced initialization with backend sync on page load
+ * DL-36: Added cookie table rendering
  */
 document.addEventListener('DOMContentLoaded', function () {
     checkUserSession();
     initializeCookieConsent();
+    renderCookieTables();  // DL-36: Render detailed cookie tables
     setupEventListeners();
 
     // DL-5: Sync current preferences to backend on page load for consistency
