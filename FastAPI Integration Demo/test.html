@@ -107,6 +107,14 @@
         async function runAllTests() {
             clearResults();
             const apiUrl = document.getElementById('testApiUrl').value;
+            let fetchCallCount = 0;
+
+            // Monitor fetch calls
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+                fetchCallCount++;
+                return originalFetch.apply(this, args);
+            };
 
             // Test 1: Health Check
             try {
@@ -234,6 +242,49 @@
             } catch (error) {
                 addTestResult('Invalid POST Data', false, `Error: ${error.message}`);
             }
+
+            // Test 9: Dark-mode toggle button exists
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn && themeBtn.textContent.includes('🌙' || '☀️')) {
+                addTestResult('Dark-mode toggle button exists', true, 'Toggle button found in header');
+            } else {
+                addTestResult('Dark-mode toggle button exists', false, 'Toggle button not found or invalid');
+            }
+
+            // Test 10: Toggle button adds dark-mode class
+            const initialFetchCount = fetchCallCount;
+            themeBtn.click();
+            const hasClass = document.body.classList.contains('dark-mode');
+            if (hasClass && fetchCallCount === initialFetchCount) {
+                addTestResult('Toggle button adds dark-mode class', true, 'Dark-mode class added without network requests');
+            } else {
+                addTestResult('Toggle button adds dark-mode class', false, `Dark-mode class: ${hasClass}, fetch calls: ${fetchCallCount - initialFetchCount}`);
+            }
+
+            // Test 11: Toggle button removes dark-mode class
+            const afterFirstToggleFetchCount = fetchCallCount;
+            themeBtn.click();
+            const classRemoved = !document.body.classList.contains('dark-mode');
+            if (classRemoved && fetchCallCount === afterFirstToggleFetchCount) {
+                addTestResult('Toggle button removes dark-mode class', true, 'Dark-mode class removed without network requests');
+            } else {
+                addTestResult('Toggle button removes dark-mode class', false, `Dark-mode class removed: ${classRemoved}, fetch calls: ${fetchCallCount - afterFirstToggleFetchCount}`);
+            }
+
+            // Test 12: No network requests triggered during toggle
+            const beforeToggleFetchCount = fetchCallCount;
+            if (themeBtn) {
+                themeBtn.click();
+                themeBtn.click();
+            }
+            if (fetchCallCount === beforeToggleFetchCount) {
+                addTestResult('No network requests on theme toggle', true, 'Theme toggle is purely client-side');
+            } else {
+                addTestResult('No network requests on theme toggle', false, `${fetchCallCount - beforeToggleFetchCount} unexpected fetch calls`);
+            }
+
+            // Restore original fetch
+            window.fetch = originalFetch;
 
             showSummary();
         }
