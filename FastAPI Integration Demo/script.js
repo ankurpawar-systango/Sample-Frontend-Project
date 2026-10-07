@@ -144,6 +144,28 @@ async function checkHealth() {
     }
 }
 
+// Fetch and display app info
+async function fetchAppInfo() {
+    const apiUrl = getApiUrl();
+    const appNameElement = document.getElementById('appName');
+
+    try {
+        const response = await fetch(`${apiUrl}/api/info`);
+        const data = await response.json();
+
+        if (response.ok && data.app) {
+            appNameElement.textContent = `App: ${data.app}`;
+            appNameElement.className = 'app-badge success';
+        } else {
+            throw new Error('Failed to fetch app info');
+        }
+    } catch (error) {
+        console.warn('Could not fetch app info:', error.message);
+        appNameElement.textContent = 'App: Unknown';
+        appNameElement.className = 'app-badge error';
+    }
+}
+
 // Create New Item
 async function createItem(event) {
     event.preventDefault();
@@ -218,6 +240,7 @@ async function sendGreeting(event) {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     updateBackendUrl();
+    fetchAppInfo();
 
     // Update backend URL when input changes
     document.getElementById('apiUrl').addEventListener('change', updateBackendUrl);
