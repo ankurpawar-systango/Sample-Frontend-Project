@@ -215,8 +215,41 @@ async function sendGreeting(event) {
     }
 }
 
+// Initialize theme from localStorage or system preference
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateThemeButton();
+    } else if (savedTheme === 'light') {
+        document.body.classList.remove('dark-mode');
+        updateThemeButton();
+    }
+}
+
+// Toggle dark mode theme
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    updateThemeButton();
+}
+
+// Update theme button appearance
+function updateThemeButton() {
+    const btn = document.getElementById('themeToggleBtn');
+    if (document.body.classList.contains('dark-mode')) {
+        btn.textContent = '☀️';
+        btn.title = 'Switch to light mode';
+    } else {
+        btn.textContent = '🌙';
+        btn.title = 'Switch to dark mode';
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    initTheme();
     updateBackendUrl();
 
     // Update backend URL when input changes
