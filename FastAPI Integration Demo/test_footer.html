@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer DOM Verification Tests - FastAPI Integration Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+
+        .test-panel h3 {
+            margin-top: 0;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .test-item {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-pass {
+            color: #27ae60;
+        }
+
+        .test-fail {
+            color: #e74c3c;
+        }
+
+        .test-summary {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+            font-weight: bold;
+        }
+
+        button.test-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.test-btn:hover {
+            background-color: #764ba2;
+        }
+
+        .main-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>Footer DOM Verification Tests</h1>
+        <p>This page loads the FastAPI Integration Demo and verifies the footer DOM structure.</p>
+        <iframe id="demoFrame" src="index.html" style="width: 100%; height: 600px; border: 1px solid #ccc; margin: 20px 0;"></iframe>
+    </div>
+
+    <div class="test-panel">
+        <h3>Footer Tests</h3>
+        <div id="testResults"></div>
+        <div id="testSummary" class="test-summary"></div>
+        <button class="test-btn" onclick="runTests()">Run Tests</button>
+    </div>
+
+    <script>
+        function runTests() {
+            const resultDiv = document.getElementById('testResults');
+            resultDiv.innerHTML = '';
+            let passed = 0;
+            let failed = 0;
+
+            // Get the iframe content
+            const iframe = document.getElementById('demoFrame');
+            let iframeDoc;
+            try {
+                iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            } catch (e) {
+                // If we can't access iframe due to CORS, test the current document's footer
+                iframeDoc = document;
+            }
+
+            // Test 1: Footer element exists
+            const footer = iframeDoc.querySelector('footer');
+            if (footer) {
+                addTestResult('Footer element exists', true, resultDiv);
+                passed++;
+            } else {
+                addTestResult('Footer element exists', false, resultDiv);
+                failed++;
+            }
+
+            // Test 2: Footer contains at least one paragraph
+            const footerParagraphs = iframeDoc.querySelectorAll('footer p');
+            if (footerParagraphs.length > 0) {
+                addTestResult(`Footer contains ${footerParagraphs.length} paragraph(s)`, true, resultDiv);
+                passed++;
+            } else {
+                addTestResult('Footer contains paragraphs', false, resultDiv);
+                failed++;
+            }
+
+            // Test 3: Footer contains the "Built with care" text
+            const builtWithCareParagraph = Array.from(footerParagraphs).find(
+                p => p.textContent.includes('Built with care')
+            );
+            if (builtWithCareParagraph) {
+                addTestResult('Footer contains "Built with care" text', true, resultDiv);
+                passed++;
+            } else {
+                addTestResult('Footer contains "Built with care" text', false, resultDiv);
+                failed++;
+            }
+
+            // Test 4: "Built with care" paragraph has correct class
+            if (builtWithCareParagraph && builtWithCareParagraph.classList.contains('footer-attribution')) {
+                addTestResult('Built with care paragraph has footer-attribution class', true, resultDiv);
+                passed++;
+            } else {
+                addTestResult('Built with care paragraph has footer-attribution class', false, resultDiv);
+                failed++;
+            }
+
+            // Test 5: Exact text match for "Built with care"
+            if (builtWithCareParagraph && builtWithCareParagraph.textContent.trim() === 'Built with care') {
+                addTestResult('Footer text is exactly "Built with care"', true, resultDiv);
+                passed++;
+            } else {
+                addTestResult('Footer text is exactly "Built with care"', false, resultDiv);
+                failed++;
+            }
+
+            // Display summary
+            const summaryDiv = document.getElementById('testSummary');
+            const total = passed + failed;
+            summaryDiv.innerHTML = `${passed}/${total} tests passed`;
+            summaryDiv.className = `test-summary ${passed === total ? 'test-pass' : 'test-fail'}`;
+        }
+
+        function addTestResult(name, passed, resultDiv) {
+            const testItem = document.createElement('div');
+            testItem.className = `test-item ${passed ? 'test-pass' : 'test-fail'}`;
+            testItem.innerHTML = `${passed ? '✓' : '✗'} ${name}`;
+            resultDiv.appendChild(testItem);
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>
