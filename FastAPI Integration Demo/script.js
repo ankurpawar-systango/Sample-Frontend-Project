@@ -9,6 +9,24 @@ function updateBackendUrl() {
     document.getElementById('backendUrl').textContent = getApiUrl();
 }
 
+// Fetch and display version
+async function fetchVersion() {
+    const apiUrl = getApiUrl();
+    const versionElement = document.getElementById('appVersion');
+
+    try {
+        const response = await fetch(`${apiUrl}/api/version`);
+        if (response.ok) {
+            const data = await response.json();
+            versionElement.textContent = data.version || 'Unknown';
+        } else {
+            versionElement.textContent = 'Unavailable';
+        }
+    } catch (error) {
+        versionElement.textContent = 'Unavailable';
+    }
+}
+
 // Log API response to the log container
 function logResponse(endpoint, method, status, data) {
     const logContainer = document.getElementById('responseLog');
@@ -218,6 +236,7 @@ async function sendGreeting(event) {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     updateBackendUrl();
+    fetchVersion();
 
     // Update backend URL when input changes
     document.getElementById('apiUrl').addEventListener('change', updateBackendUrl);
