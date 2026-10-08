@@ -514,6 +514,17 @@ footer p {
     margin: 5px 0;
 }
 
+.footer-attribution {
+    font-size: 0.9em;
+    margin-top: 10px;
+    color: #666;
+    transition: color 0.3s;
+}
+
+body.dark-mode .footer-attribution {
+    color: #b0b0b0;
+}
+
 footer strong {
     color: #667eea;
     transition: color 0.3s;
