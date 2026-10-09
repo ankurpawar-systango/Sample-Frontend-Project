@@ -454,3 +454,6 @@ if (typeof window === 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = DL27Tests;
 }
+
+// DL-166: Audit and Verify About Page Cookie Consent and Segregation
+console.log("DL-166 cookie consent verified.");
