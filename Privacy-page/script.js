@@ -1,14 +1,17 @@
 /**
- * Privacy Policy Page Script (DL-60)
+ * Privacy Policy Page Script (DL-60, DL-64)
  *
  * Handles privacy policy consent management with accept/reject functionality.
  * Stores user consent in localStorage for future reference.
+ * Also manages user feature preferences (DL-64).
  *
  * Features:
  * - Accept Privacy Policy button stores consent
  * - Reject Privacy Policy button redirects to home
  * - Consent status tracked in localStorage
  * - User-friendly notifications via SweetAlert2
+ * - Feature preference selection with toggles (DL-64)
+ * - Feature preferences persisted in localStorage (DL-64)
  * - Responsive design
  */
 
@@ -16,8 +19,64 @@
 const CONFIG = {
     PRIVACY_CONSENT_KEY: 'privacyPolicyConsent',
     PRIVACY_TIMESTAMP_KEY: 'privacyPolicyTimestamp',
+    FEATURE_PREFERENCES_KEY: 'featurePreferences',
     HOME_URL: '/'
 };
+
+/**
+ * Platform features with descriptions
+ * Essential features are marked as required and non-toggleable
+ */
+const PLATFORM_FEATURES = {
+    authentication: {
+        name: 'Authentication & Security',
+        description: 'Core authentication, login sessions, and security features to protect your account',
+        essential: true,
+        category: 'Core'
+    },
+    core_functionality: {
+        name: 'Core Platform Functionality',
+        description: 'Essential features required for the platform to operate (data storage, profile management)',
+        essential: true,
+        category: 'Core'
+    },
+    analytics: {
+        name: 'Analytics & Usage Tracking',
+        description: 'Track your usage patterns to help us understand feature adoption and improve the platform',
+        essential: false,
+        category: 'Analytics'
+    },
+    personalization: {
+        name: 'Personalization & Preferences',
+        description: 'Customize your experience based on your preferences, language, theme, and saved settings',
+        essential: false,
+        category: 'User Experience'
+    },
+    notifications: {
+        name: 'Notifications & Alerts',
+        description: 'Send you important alerts, updates, and notifications about your activity',
+        essential: false,
+        category: 'Communications'
+    },
+    third_party_integrations: {
+        name: 'Third-Party Integrations',
+        description: 'Connect with external services and integrations to extend platform functionality',
+        essential: false,
+        category: 'Integrations'
+    }
+};
+
+/**
+ * Get default feature preferences
+ * All non-essential features default to true; essential features are always true
+ */
+function getDefaultFeaturePreferences() {
+    const prefs = {};
+    for (const [featureId, feature] of Object.entries(PLATFORM_FEATURES)) {
+        prefs[featureId] = true; // Default all features to enabled
+    }
+    return prefs;
+}
 
 /**
  * Initialize privacy policy page
@@ -25,7 +84,154 @@ const CONFIG = {
  */
 function initializePrivacyPage() {
     setupEventListeners();
+    setupFeaturePreferences();
     checkExistingConsent();
+}
+
+/**
+ * Setup feature preferences UI and event listeners
+ */
+function setupFeaturePreferences() {
+    try {
+        const prefsContainer = document.getElementById('featurePreferencesContainer');
+        if (!prefsContainer) {
+            console.warn('Feature preferences container not found in HTML');
+            return;
+        }
+
+        // Get existing preferences or defaults
+        const currentPrefs = getFeaturePreferences() || getDefaultFeaturePreferences();
+
+        // Group features by category
+        const categories = {};
+        for (const [featureId, feature] of Object.entries(PLATFORM_FEATURES)) {
+            if (!categories[feature.category]) {
+                categories[feature.category] = [];
+            }
+            categories[feature.category].push({ id: featureId, ...feature });
+        }
+
+        // Render feature preference sections
+        let prefsHTML = '<div class="feature-preferences-wrapper">';
+
+        for (const [category, features] of Object.entries(categories)) {
+            prefsHTML += `
+                <div class="feature-category">
+                    <h4 class="category-title">${category}</h4>
+                    <div class="features-list">
+            `;
+
+            for (const feature of features) {
+                const isChecked = currentPrefs[feature.id] !== false ? 'checked' : '';
+                const isDisabled = feature.essential ? 'disabled' : '';
+                const disabledClass = feature.essential ? 'feature-essential' : '';
+
+                prefsHTML += `
+                    <div class="feature-item ${disabledClass}">
+                        <label class="feature-label">
+                            <input
+                                type="checkbox"
+                                class="feature-checkbox"
+                                data-feature-id="${feature.id}"
+                                ${isChecked}
+                                ${isDisabled}
+                            >
+                            <div class="feature-info">
+                                <span class="feature-name">${feature.name}</span>
+                                ${feature.essential ? '<span class="badge-essential">Essential</span>' : ''}
+                                <p class="feature-description">${feature.description}</p>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            }
+
+            prefsHTML += `
+                    </div>
+                </div>
+            `;
+        }
+
+        prefsHTML += '</div>';
+        prefsContainer.innerHTML = prefsHTML;
+
+        // Setup checkbox event listeners
+        const checkboxes = prefsContainer.querySelectorAll('.feature-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', handleFeatureToggle);
+        });
+
+        console.log('Feature preferences UI initialized');
+    } catch (error) {
+        console.error('Error setting up feature preferences:', error);
+    }
+}
+
+/**
+ * Handle individual feature toggle
+ */
+function handleFeatureToggle(event) {
+    const featureId = event.target.getAttribute('data-feature-id');
+    const isChecked = event.target.checked;
+
+    // Update current preferences in memory (but don't persist yet)
+    // Preferences are only saved when user accepts privacy policy
+    console.log(`Feature ${featureId} toggled: ${isChecked}`);
+}
+
+/**
+ * Get current feature preferences from localStorage
+ */
+function getFeaturePreferences() {
+    try {
+        const prefsData = localStorage.getItem(CONFIG.FEATURE_PREFERENCES_KEY);
+        return prefsData ? JSON.parse(prefsData) : null;
+    } catch (error) {
+        console.error('Error retrieving feature preferences:', error);
+        return null;
+    }
+}
+
+/**
+ * Save feature preferences to localStorage
+ */
+function saveFeaturePreferences() {
+    try {
+        const prefsContainer = document.getElementById('featurePreferencesContainer');
+        if (!prefsContainer) return null;
+
+        const checkboxes = prefsContainer.querySelectorAll('.feature-checkbox');
+        const preferences = getDefaultFeaturePreferences();
+
+        checkboxes.forEach(checkbox => {
+            const featureId = checkbox.getAttribute('data-feature-id');
+            preferences[featureId] = checkbox.checked;
+        });
+
+        // Validate at least one essential feature is selected
+        // (This should always be true since essential features are disabled)
+        const hasEssentialFeatures = Object.entries(PLATFORM_FEATURES)
+            .filter(([id, feature]) => feature.essential)
+            .every(([id]) => preferences[id]);
+
+        if (!hasEssentialFeatures) {
+            console.warn('Essential features validation failed');
+            return null;
+        }
+
+        const prefsData = {
+            preferences: preferences,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent
+        };
+
+        localStorage.setItem(CONFIG.FEATURE_PREFERENCES_KEY, JSON.stringify(prefsData));
+        console.log('Feature preferences saved:', preferences);
+        return preferences;
+    } catch (error) {
+        console.error('Error saving feature preferences:', error);
+        return null;
+    }
 }
 
 /**
@@ -46,15 +252,22 @@ function setupEventListeners() {
 
 /**
  * Handle accept privacy policy action
- * Stores consent to localStorage and shows confirmation
+ * Stores consent and feature preferences to localStorage and shows confirmation
  */
 function handleAcceptPrivacy() {
     try {
+        // Save feature preferences first
+        const savedPrefs = saveFeaturePreferences();
+        if (!savedPrefs) {
+            throw new Error('Failed to save feature preferences');
+        }
+
         // Store consent in localStorage
         const consentData = {
             accepted: true,
             timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            featurePreferencesAccepted: true
         };
 
         localStorage.setItem(CONFIG.PRIVACY_CONSENT_KEY, JSON.stringify(consentData));
@@ -63,7 +276,7 @@ function handleAcceptPrivacy() {
         // Show success notification
         Swal.fire({
             title: 'Privacy Policy Accepted',
-            html: '<p>Thank you for reviewing and accepting our Privacy Policy.</p><p>Your consent has been recorded and will be used to improve your experience on our platform.</p>',
+            html: '<p>Thank you for reviewing and accepting our Privacy Policy.</p><p>Your consent and feature preferences have been recorded and will be used to improve your experience on our platform.</p>',
             icon: 'success',
             confirmButtonText: 'Continue',
             confirmButtonColor: '#667eea',
@@ -78,7 +291,7 @@ function handleAcceptPrivacy() {
             }
         });
 
-        console.log('Privacy policy accepted at:', new Date().toISOString());
+        console.log('Privacy policy and feature preferences accepted at:', new Date().toISOString());
     } catch (error) {
         console.error('Error accepting privacy policy:', error);
         Swal.fire({
@@ -305,5 +518,9 @@ window.PrivacyPolicy = {
     getConsentStatus: getConsentStatus,
     clearConsent: clearConsent,
     handleAccept: handleAcceptPrivacy,
-    handleReject: handleRejectPrivacy
+    handleReject: handleRejectPrivacy,
+    getFeaturePreferences: getFeaturePreferences,
+    saveFeaturePreferences: saveFeaturePreferences,
+    getDefaultFeaturePreferences: getDefaultFeaturePreferences,
+    getPlatformFeatures: () => PLATFORM_FEATURES
 };
